@@ -174,9 +174,24 @@ a:hover { color: var(--accent); }
   opacity: 1; visibility: visible; transform: none; clip-path: inset(0 0 0 0 round 18px);
   transition: opacity .2s ease, transform .3s cubic-bezier(.2,.9,.3,1.15), clip-path .35s cubic-bezier(.2,.9,.3,1), visibility 0s;
 }
-.menu-panel .menu-group { opacity: 0; transform: translateY(-6px); transition: opacity .25s ease, transform .3s ease; }
-.menu-panel.open .menu-group { opacity: 1; transform: none; }
-.menu-panel.open .menu-group:nth-child(2) { transition-delay: .06s; }
+/* Hamburger morphs into a cross */
+.menu-btn .bars path { transform-box: view-box; transition: transform .35s cubic-bezier(.3,1.4,.5,1), opacity .2s ease; }
+.menu-btn .bars .l1 { transform-origin: 12px 7px; }
+.menu-btn .bars .l2 { transform-origin: 12px 12px; }
+.menu-btn .bars .l3 { transform-origin: 12px 17px; }
+.menu-btn[aria-expanded="true"] .bars .l1 { transform: translateY(5px) rotate(45deg); }
+.menu-btn[aria-expanded="true"] .bars .l2 { transform: scaleX(0); opacity: 0; }
+.menu-btn[aria-expanded="true"] .bars .l3 { transform: translateY(-5px) rotate(-45deg); }
+/* Items cascade in one after the other */
+.menu-panel .menu-title, .menu-panel .toc li, .menu-panel .menu-cta {
+  opacity: 0; transform: translateX(-12px);
+  transition: opacity .25s ease, transform .4s cubic-bezier(.2,.9,.3,1.2);
+  transition-delay: 0s;
+}
+.menu-panel.open .menu-title, .menu-panel.open .toc li, .menu-panel.open .menu-cta {
+  opacity: 1; transform: none; transition-delay: calc(var(--i, 0) * 40ms + 80ms);
+}
+.menu-panel .menu-cta { transform: translateY(8px); }
 .menu-group { padding: 12px 12px 14px; display: grid; gap: 10px; }
 .menu-group + .menu-group { border-top: 1px solid var(--line); }
 .menu-title { font-family: var(--font-display); font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--label); margin: 0; }
@@ -376,41 +391,33 @@ button.frame { border: 0; }
 .build .cap .step-num { min-width: 22px; }
 .build .cap p { margin: 0; font-size: 15px; line-height: 1.5; }
 .build .cap strong { color: var(--text); font-weight: 500; font-family: var(--font-display); }
-/* Fake 3D plans: lateral rotation driven by a half-arc cursor */
-.stage3d { position: relative; perspective: 1300px; perspective-origin: 50% 40%; padding-bottom: 30px; --ry: 0deg; }
-.plane { position: relative; transform-style: preserve-3d; transform: rotateY(var(--ry)) scale(0.94); transition: transform .5s cubic-bezier(.2,.8,.3,1); }
-.stage3d.dragging .plane { transition: transform .08s linear; }
-.plane > .shot { position: relative; z-index: 1; box-shadow: 0 30px 50px -28px rgba(0,0,0,0.55); }
-.edge { position: absolute; top: 0; height: 100%; width: 16px; border-radius: 3px; background: linear-gradient(90deg, var(--edge-a), var(--edge-b)); }
-.edge-l { left: 0; transform-origin: left center; transform: rotateY(90deg); }
-.edge-r { right: 0; transform-origin: right center; transform: rotateY(-90deg); }
-.stage3d::after {
-  content: ""; position: absolute; left: 12%; right: 12%; bottom: 8px; height: 26px; border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(0,0,0,0.38), transparent); filter: blur(4px);
-  transform: translateX(var(--shift, 0px)) scaleX(calc(1 - var(--tilt, 0) * 0.25)); pointer-events: none; z-index: -1;
-}
+/* 3D schemas: the card stays still, the model inside turns; a half-arc cursor drives it */
+.stage3d { position: relative; }
+.stage3d .shot canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
+.stage3d.dragging .shot canvas { cursor: grabbing; }
+.stage3d .shot.is3d img { opacity: 0; }
 .badge3d {
   position: absolute; left: 14px; top: 14px; z-index: 3; padding: 5px 10px; border-radius: 999px;
   font-family: var(--font-display); font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
-  background: rgba(12,12,12,0.7); color: #fff; backdrop-filter: blur(6px); pointer-events: none;
-  transform: translateZ(1px);
+  background: rgba(12,12,12,0.72); color: #fff; backdrop-filter: blur(6px); pointer-events: none;
 }
-.arc { position: absolute; left: 50%; bottom: 0; width: min(62%, 360px); aspect-ratio: 200 / 64; transform: translateX(-50%); z-index: 4; cursor: ew-resize; touch-action: none; border-radius: 0 0 50% 50%; }
+.arc { position: absolute; left: 50%; bottom: 10px; width: min(46%, 300px); aspect-ratio: 200 / 64; transform: translateX(-50%); z-index: 4; cursor: ew-resize; touch-action: none; }
 .arc svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.arc .track { fill: none; stroke: var(--border); stroke-width: 3; stroke-dasharray: 2 7; stroke-linecap: round; }
-.arc .fill { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
-.arc .end { font-family: var(--font-display); font-size: 11px; fill: var(--label); }
+.arc .track { fill: none; stroke: rgba(20,20,18,0.35); stroke-width: 3; stroke-dasharray: 2 7; stroke-linecap: round; }
+.arc .fill { fill: none; stroke: var(--sky-orange); stroke-width: 3; stroke-linecap: round; }
+.arc .end { font-family: var(--font-display); font-size: 13px; font-weight: 600; fill: rgba(20,20,18,0.55); }
 .knob {
   position: absolute; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%;
-  background: var(--accent); box-shadow: 0 0 0 5px var(--accent-glow), 0 6px 16px rgba(0,0,0,0.35);
+  background: var(--sky-orange); box-shadow: 0 0 0 5px rgba(255,122,59,0.22), 0 6px 16px rgba(0,0,0,0.3);
   display: grid; place-items: center; color: #1a0d05; transition: transform .2s ease;
 }
 .knob svg { position: static; width: 14px; height: 14px; }
 .arc:hover .knob, .arc:focus-visible .knob, .stage3d.dragging .knob { transform: scale(1.15); }
 .arc:focus-visible { outline: none; }
-.arc:focus-visible .knob { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent); }
+.arc:focus-visible .knob { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--sky-orange); }
 .stage3d.hint .knob { animation: nudge 1.8s ease-in-out 2; }
 @keyframes nudge { 0%,100% { translate: 0 0; } 30% { translate: -10px -2px; } 70% { translate: 10px -2px; } }
+.stage3d .shot.is3d { background: linear-gradient(180deg, #fbfbf9, #e9e8e3); border-color: transparent; }
 .b-hall { grid-column: span 3; } .b-hall .shot { aspect-ratio: 16 / 9; }
 .b-3d { grid-column: span 3; } .b-3d .shot { aspect-ratio: 16 / 9; }
 .b-iso { grid-column: span 6; } .b-iso .shot { aspect-ratio: 1600 / 640; }
@@ -518,13 +525,9 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
       <li><a href="#parcours" data-i18n="navAbout">Parcours</a></li>
     </ul>
     <div class="nav-right">
-      <div class="lang-switch" role="group" aria-label="Langue" data-i18n-aria="langTitle">
-        <button type="button" id="lang-fr" data-lang="fr" aria-pressed="true" lang="fr" aria-label="Français"><svg class="flag" viewBox="0 0 3 2" aria-hidden="true"><rect width="1" height="2" fill="#002654"/><rect x="1" width="1" height="2" fill="#fff"/><rect x="2" width="1" height="2" fill="#ce1126"/></svg><span>FR</span></button>
-        <button type="button" id="lang-en" data-lang="en" aria-pressed="false" lang="en" aria-label="English"><svg class="flag" viewBox="0 0 60 40" aria-hidden="true"><clipPath id="uk-c"><rect width="60" height="40"/></clipPath><g clip-path="url(#uk-c)"><rect width="60" height="40" fill="#012169"/><path d="M0 0l60 40M60 0L0 40" stroke="#fff" stroke-width="8"/><path d="M0 0l60 40M60 0L0 40" stroke="#c8102e" stroke-width="3"/><path d="M30 0v40M0 20h60" stroke="#fff" stroke-width="12"/><path d="M30 0v40M0 20h60" stroke="#c8102e" stroke-width="7"/></g></svg><span>EN</span></button>
-      </div>
       <div class="menu">
         <button class="btn btn-ghost menu-btn" type="button" id="menu-btn" aria-expanded="false" aria-controls="menu-panel">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <svg class="bars" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path class="l1" d="M4 7h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="l2" d="M4 12h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="l3" d="M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           <span data-i18n="menu">Menu</span>
           <svg class="chev" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
@@ -545,6 +548,10 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
             <a class="btn btn-solid menu-cta" href="#contact" data-i18n="navCta">Parlons-en</a>
           </div>
         </div>
+      </div>
+      <div class="lang-switch" role="group" aria-label="Langue" data-i18n-aria="langTitle">
+        <button type="button" id="lang-fr" data-lang="fr" aria-pressed="true" lang="fr" aria-label="Français"><svg class="flag" viewBox="0 0 3 2" aria-hidden="true"><rect width="1" height="2" fill="#002654"/><rect x="1" width="1" height="2" fill="#fff"/><rect x="2" width="1" height="2" fill="#ce1126"/></svg><span>FR</span></button>
+        <button type="button" id="lang-en" data-lang="en" aria-pressed="false" lang="en" aria-label="English"><svg class="flag" viewBox="0 0 60 40" aria-hidden="true"><clipPath id="uk-c"><rect width="60" height="40"/></clipPath><g clip-path="url(#uk-c)"><rect width="60" height="40" fill="#012169"/><path d="M0 0l60 40M60 0L0 40" stroke="#fff" stroke-width="8"/><path d="M0 0l60 40M60 0L0 40" stroke="#c8102e" stroke-width="3"/><path d="M30 0v40M0 20h60" stroke="#fff" stroke-width="12"/><path d="M30 0v40M0 20h60" stroke="#c8102e" stroke-width="7"/></g></svg><span>EN</span></button>
       </div>
     </div>
   </div>
@@ -639,8 +646,8 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
 
     <div class="recaps">
       <span data-i18n="recapLabel">Retour en images sur Instagram :</span>
-      <a class="btn btn-ghost copy" href="https://www.instagram.com/p/DQ9G4RDjfLB/" target="_blank" rel="noopener" data-i18n="recap1">Récap 1 ↗</a>
-      <a class="btn btn-ghost copy" href="https://www.instagram.com/p/DREq-4VCf9u/" target="_blank" rel="noopener" data-i18n="recap2">Récap 2 ↗</a>
+      <a class="btn btn-ghost copy" href="https://www.instagram.com/p/DQ9G4RDjfLB/" target="_blank" rel="noopener" data-i18n="recap1">Récap event Slipi ↗</a>
+      <a class="btn btn-ghost copy" href="https://www.instagram.com/p/DREq-4VCf9u/" target="_blank" rel="noopener" data-i18n="recap2">Récap USS ↗</a>
     </div>
 
     <ol class="steps" aria-label="Ce que j'ai fait" data-i18n-aria="stepsAria">
@@ -704,19 +711,19 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
 
     <ol class="build">
       <li class="b-hall">
-        <button type="button" class="shot zoom"><img src="assets/hall-sketchup.jpg" alt="Modélisation SketchUp du hall du JICC, colonnes et circulations" data-i18n-alt="altHall" width="1400" height="787" loading="lazy"><span class="zoom-hint" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span></button>
+        <button type="button" class="shot zoom" data-model="hall"><img src="assets/hall-sketchup.jpg" alt="Modélisation SketchUp du hall du JICC, colonnes et circulations" data-i18n-alt="altHall" width="1400" height="787" loading="lazy"><span class="zoom-hint" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span></button>
         <div class="cap"><span class="step-num">01</span><p data-i18n="b1"><strong>Relevé du hall.</strong> Le lieu modélisé dans SketchUp pour caler l'emprise entre les colonnes.</p></div>
       </li>
       <li class="b-3d">
-        <button type="button" class="shot paper zoom"><img src="assets/skatepark-3d-rail.jpg" alt="Rendu 3D du skatepark : rail orange, plans inclinés et mur Volcom × Televisi Star" data-i18n-alt="alt3d" width="1080" height="514" loading="lazy"><span class="zoom-hint" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span></button>
+        <button type="button" class="shot paper zoom" data-model="modules"><img src="assets/skatepark-3d-rail.jpg" alt="Rendu 3D du skatepark : rail orange, plans inclinés et mur Volcom × Televisi Star" data-i18n-alt="alt3d" width="1080" height="514" loading="lazy"><span class="zoom-hint" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span></button>
         <div class="cap"><span class="step-num">02</span><p data-i18n="b2"><strong>Modules.</strong> Rail orange, plans inclinés et funbox au logo Volcom, devant le mur Televisi Star.</p></div>
       </li>
       <li class="b-iso">
-        <button type="button" class="shot paper zoom"><img src="assets/skatepark-iso.jpg" alt="Vue isométrique de la zone : quarter pipe avec plateforme, rail, funbox, stand et mur de marque" data-i18n-alt="altIso" width="1600" height="773" loading="lazy"><span class="zoom-hint" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span></button>
+        <button type="button" class="shot paper zoom" data-model="plan"><img src="assets/skatepark-iso.jpg" alt="Vue isométrique de la zone : quarter pipe avec plateforme, rail, funbox, stand et mur de marque" data-i18n-alt="altIso" width="1600" height="773" loading="lazy"><span class="zoom-hint" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span></button>
         <div class="cap"><span class="step-num">03</span><p data-i18n="b3"><strong>Plan d'ensemble.</strong> Une piste en longueur : entrée et stand Workwear, funbox et rail au centre, quarter pipe avec plateforme au fond.</p></div>
       </li>
       <li class="b-stand">
-        <button type="button" class="shot paper zoom"><img src="assets/stand-volcom.jpg" alt="Rendu du mur de stand Volcom Workwear : panneaux produits, portant et visuels" data-i18n-alt="altStand" width="1600" height="773" loading="lazy"><span class="zoom-hint" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span></button>
+        <button type="button" class="shot paper zoom" data-model="stand"><img src="assets/stand-volcom.jpg" alt="Rendu du mur de stand Volcom Workwear : panneaux produits, portant et visuels" data-i18n-alt="altStand" width="1600" height="773" loading="lazy"><span class="zoom-hint" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span></button>
         <div class="cap"><span class="step-num">04</span><p data-i18n="b4"><strong>Stand Volcom Workwear.</strong> Le mur de marque pensé pour le lancement « Coming soon » : produits, arguments techniques et visuels.</p></div>
       </li>
       <li class="b-shop">
@@ -812,6 +819,7 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function () {
   var root = document.documentElement;
@@ -856,7 +864,7 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
     aud3: 'Corporate', a3When: '03 · November 7–9', a3T: 'Volcom Skate Jam at USS',
     a3P: 'The key activation at USS, Hall A-B, JICC Senayan, 11am to 10pm: a skatepark built inside the hall, <span class="hi">best trick, Game of Skate, skate clinic for all levels, live screen printing</span> and a Volcom Workwear booth. IDR 22.5M in prizes.',
     a3G: '<b>Goal</b>Reach the wider public and drive foot traffic.',
-    recapLabel: 'Recap on Instagram:', recap1: 'Recap 1 ↗', recap2: 'Recap 2 ↗',
+    recapLabel: 'Recap on Instagram:', recap1: 'Slipi event recap ↗', recap2: 'USS recap ↗',
     altPosterUss: 'Volcom Skate Jam poster at USS, November 7–9, Hall A-B JICC Senayan, IDR 22,500,000 prize',
     altPosterSlipi: 'Televisi Star × Volcom Skate Jam poster at Slipi skatepark, Sunday 2 November 2025',
     altFilm: 'Still from Strange Broadcast: a skater grinding a low wall at night',
@@ -964,6 +972,7 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
   /* ---------- Dropdown ---------- */
   var btn = document.getElementById('menu-btn');
   var panel = document.getElementById('menu-panel');
+  panel.querySelectorAll('.menu-title, .toc li, .menu-cta').forEach(function (el, i) { el.style.setProperty('--i', i); });
   function isOpen() { return panel.classList.contains('open'); }
   function openMenu(open) {
     panel.classList.toggle('open', open);
@@ -986,69 +995,317 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
   window.addEventListener('scroll', markActive, { passive: true });
 
 
-  /* ---------- Fake 3D plans in the build section ---------- */
-  var MAX = 42;
-  document.querySelectorAll('.build li > .shot').forEach(function (shot, i) {
-    var stage = document.createElement('div'); stage.className = 'stage3d';
-    var plane = document.createElement('div'); plane.className = 'plane';
-    shot.parentNode.insertBefore(stage, shot);
-    plane.appendChild(shot);
-    plane.insertAdjacentHTML('beforeend', '<span class="edge edge-l" aria-hidden="true"></span><span class="edge edge-r" aria-hidden="true"></span>');
-    stage.appendChild(plane);
-    shot.insertAdjacentHTML('beforeend', '<span class="badge3d" aria-hidden="true">3D</span>');
+  /* ---------- 3D schemas (cards 01 to 04 of the build section) ----------
+     The card stays still; a simplified model of each schema turns inside it. */
+  var MAX = 60;
+  var ORANGE = 0xff5a1f, BLACK = 0x1d1d1d, WHITE = 0xf4f4f1, GREY = 0x9b9b98, WOOD = 0xb0602a;
+
+  function canvasTex(w, h, draw) {
+    var c = document.createElement('canvas'); c.width = w; c.height = h;
+    draw(c.getContext('2d'), w, h);
+    var t = new THREE.CanvasTexture(c); t.anisotropy = 4;
+    return t;
+  }
+  function stone(ctx, cx, cy, s, fg, bg) {
+    ctx.save(); ctx.translate(cx, cy);
+    ctx.fillStyle = fg; ctx.beginPath();
+    ctx.moveTo(0, -s); ctx.lineTo(s * 0.62, -s * 0.05); ctx.lineTo(0, s); ctx.lineTo(-s * 0.62, -s * 0.05); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = bg; ctx.lineWidth = s * 0.1; ctx.beginPath();
+    ctx.moveTo(0, -s * 0.8); ctx.lineTo(-s * 0.2, s * 0.15); ctx.lineTo(0, s * 0.8);
+    ctx.moveTo(-s * 0.2, s * 0.15); ctx.lineTo(s * 0.45, -s * 0.05);
+    ctx.stroke(); ctx.restore();
+  }
+  function txt(ctx, s, x, y, size, color, align) {
+    ctx.fillStyle = color; ctx.font = '900 ' + size + 'px "Arial Black", Impact, "Helvetica Neue", Arial, sans-serif';
+    ctx.textAlign = align || 'center'; ctx.textBaseline = 'middle'; ctx.fillText(s, x, y);
+  }
+  var TEX = {};
+  function tex(name) {
+    if (TEX[name]) return TEX[name];
+    var t;
+    if (name === 'tiles') t = canvasTex(256, 256, function (c, w, h) {
+      c.fillStyle = '#a9a9a6'; c.fillRect(0, 0, w, h); c.strokeStyle = '#7d7d7a'; c.lineWidth = 3; c.strokeRect(0, 0, w, h);
+    });
+    if (name === 'whiteTiles') t = canvasTex(256, 256, function (c, w, h) {
+      c.fillStyle = '#efefec'; c.fillRect(0, 0, w, h); c.strokeStyle = '#cfcfcb'; c.lineWidth = 3; c.strokeRect(0, 0, w, h);
+    });
+    if (name === 'stripes') t = canvasTex(64, 256, function (c, w, h) {
+      for (var i = 0; i < 8; i++) { c.fillStyle = i % 2 ? '#141414' : '#ff5a1f'; c.fillRect(0, i * h / 8, w, h / 8); }
+    });
+    if (name === 'stripes') { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(0.5, 0.4); }
+    if (name === 'tvs') t = canvasTex(512, 512, function (c, w, h) {
+      c.fillStyle = '#f2f2f2'; c.fillRect(0, 0, w, h);
+      for (var y = 0; y < 10; y++) for (var x = 0; x < 5; x++) txt(c, 'STAR', 52 + x * 104, 26 + y * 52, 26, '#bdbdbd');
+      c.fillStyle = '#fff'; c.fillRect(40, 190, 432, 140); c.strokeStyle = '#111'; c.lineWidth = 6; c.strokeRect(40, 190, 432, 140);
+      txt(c, 'TELEVISI', 256, 228, 52, '#111'); txt(c, 'STAR', 256, 292, 72, '#111');
+    });
+    if (name === 'circle') t = canvasTex(512, 512, function (c, w, h) {
+      c.fillStyle = '#fafafa'; c.fillRect(0, 0, w, h);
+      c.strokeStyle = '#111'; c.lineWidth = 26; c.beginPath(); c.arc(256, 256, 190, 0, Math.PI * 2); c.stroke();
+      stone(c, 256, 256, 150, '#111', '#fafafa');
+    });
+    if (name === 'stoneTop') t = canvasTex(256, 256, function (c, w, h) {
+      c.fillStyle = '#151515'; c.fillRect(0, 0, w, h); stone(c, 128, 128, 105, '#f2f2f2', '#151515');
+    });
+    if (name === 'workwear') t = canvasTex(512, 320, function (c, w, h) {
+      c.fillStyle = '#121212'; c.fillRect(0, 0, w, h); c.strokeStyle = '#ff5a1f'; c.lineWidth = 8; c.strokeRect(14, 14, w - 28, h - 28);
+      stone(c, 92, 160, 80, '#ff5a1f', '#121212');
+      txt(c, 'VOLCOM', 320, 96, 64, '#ff5a1f'); txt(c, 'Workwear', 320, 168, 54, '#ff5a1f');
+      txt(c, 'DURABLE GOODS', 320, 240, 30, '#ff5a1f');
+    });
+    if (name === 'soon') t = canvasTex(512, 256, function (c, w, h) {
+      c.fillStyle = '#ffffff'; c.fillRect(0, 0, w, h); txt(c, 'COMING', 256, 86, 84, '#ff5a1f'); txt(c, 'SOON', 256, 182, 84, '#ff5a1f');
+    });
+    ['DURABILITY', 'SUPERIOR STRETCH', 'BUCKLE BUTTON'].forEach(function (label, i) {
+      if (name === 'tech' + i) t = canvasTex(320, 256, function (c, w, h) {
+        c.fillStyle = '#141414'; c.fillRect(0, 0, w, h); c.strokeStyle = '#ff5a1f'; c.lineWidth = 6; c.strokeRect(10, 10, w - 20, h - 20);
+        c.strokeStyle = '#ff5a1f'; c.lineWidth = 5; c.strokeRect(w / 2 - 28, 46, 56, 56);
+        var parts = label.split(' ');
+        parts.forEach(function (p, k) { txt(c, p, w / 2, 150 + k * 40, parts.length > 1 ? 34 : 38, '#ffffff'); });
+      });
+    });
+    if (name === 'poster') t = canvasTex(256, 320, function (c, w, h) {
+      var g = c.createLinearGradient(0, 0, w, h); g.addColorStop(0, '#2e2a26'); g.addColorStop(1, '#7a4a2a');
+      c.fillStyle = g; c.fillRect(0, 0, w, h); c.fillStyle = 'rgba(255,90,31,0.85)'; c.fillRect(20, 24, w - 40, 60);
+      txt(c, 'VOLCOM', w / 2, 54, 34, '#111'); c.fillStyle = 'rgba(255,255,255,0.18)'; c.fillRect(30, 110, w - 60, 170);
+    });
+    TEX[name] = t; return t;
+  }
+
+  function mat(color, map) {
+    var m = new THREE.MeshLambertMaterial({ color: map ? 0xffffff : color });
+    if (map) m.map = map;
+    return m;
+  }
+  var lineMat = null;
+  function add(g, geo, materials, x, y, z, ry) {
+    var m = new THREE.Mesh(geo, materials);
+    m.position.set(x || 0, y || 0, z || 0); if (ry) m.rotation.y = ry;
+    m.castShadow = true; m.receiveShadow = true;
+    if (!lineMat) lineMat = new THREE.LineBasicMaterial({ color: 0x111111, transparent: true, opacity: 0.45 });
+    m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo, 25), lineMat));
+    g.add(m); return m;
+  }
+  function box(g, w, h, d, color, x, y, z, ry, map) {
+    var geo = new THREE.BoxGeometry(w, h, d);
+    return add(g, geo, map ? [mat(color), mat(color), mat(color), mat(color), mat(0, map), mat(color)] : mat(color), x, (y || 0) + h / 2, z, ry);
+  }
+  function wallPanel(g, w, h, map, x, y, z, ry) { return box(g, w, h, 0.08, 0xffffff, x, y, z, ry, map); }
+  function decal(g, s, map, x, y, z) {
+    var m = new THREE.Mesh(new THREE.PlaneGeometry(s, s), mat(0, map));
+    m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; g.add(m); return m;
+  }
+  function floor(g, w, d, texName, rep) {
+    var t = tex(texName).clone(); t.needsUpdate = true; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(w / (rep || 2), d / (rep || 2));
+    var m = box(g, w, 0.12, d, 0xffffff, 0, -0.12, 0, 0);
+    m.material = [mat(0xd6d6d2), mat(0xd6d6d2), mat(0, t), mat(0xd6d6d2), mat(0xd6d6d2), mat(0xd6d6d2)];
+    return m;
+  }
+  // Extruded profile along Z (depth = width of the module). Caps take capColor, surfaces take faceColor.
+  function extrude(g, pts, depth, capColor, faceColor, x, z, ry, map) {
+    var s = new THREE.Shape(); s.moveTo(pts[0][0], pts[0][1]);
+    for (var i = 1; i < pts.length; i++) s.lineTo(pts[i][0], pts[i][1]);
+    var geo = new THREE.ExtrudeGeometry(s, { depth: depth, bevelEnabled: false, curveSegments: 16 });
+    geo.translate(0, 0, -depth / 2);
+    return add(g, geo, [mat(capColor, map), mat(faceColor)], x, 0, z, ry);
+  }
+  function wedge(g, len, h, w, cap, face, x, z, ry) { return extrude(g, [[0, 0], [len, 0], [len, h], [0, 0]], w, cap, face, x, z, ry); }
+  function quarter(g, r, w, cap, face, x, z, ry, map) {
+    var pts = [[0, 0]];
+    for (var i = 0; i <= 16; i++) { var a = i / 16 * Math.PI / 2; pts.push([-r * Math.sin(a), r - r * Math.cos(a)]); }
+    pts.push([-r - 0.25, r]); pts.push([-r - 0.25, 0]); pts.push([0, 0]);
+    pts = pts.map(function (p) { return [-p[0], p[1]]; });
+    return extrude(g, pts, w, cap, face, x, z, ry, map);
+  }
+  function funbox(g, len, top, h, w, cap, face, x, z, ry) {
+    return extrude(g, [[0, 0], [len, h], [len + top, h], [2 * len + top, 0], [0, 0]], w, cap, face, x - len - top / 2, z, ry);
+  }
+  function rail(g, pts, color) {
+    var curve = new THREE.CatmullRomCurve3(pts.map(function (p) { return new THREE.Vector3(p[0], p[1], p[2]); }));
+    var m = new THREE.Mesh(new THREE.TubeGeometry(curve, 80, 0.07, 10, false), mat(color));
+    m.castShadow = true; g.add(m);
+    return curve;
+  }
+  function post(g, x, y0, y1, z, color, r) {
+    var m = new THREE.Mesh(new THREE.CylinderGeometry(r || 0.05, r || 0.05, y1 - y0, 10), mat(color));
+    m.position.set(x, (y0 + y1) / 2, z); m.castShadow = true; g.add(m);
+  }
+  function railing(g, x0, x1, y, z, color) {
+    var n = Math.max(2, Math.round(Math.abs(x1 - x0) / 0.9) + 1);
+    for (var i = 0; i < n; i++) post(g, x0 + (x1 - x0) * i / (n - 1), y, y + 1, z, color, 0.04);
+    [y + 1, y + 0.55].forEach(function (yy) {
+      var m = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, Math.abs(x1 - x0), 8), mat(color));
+      m.rotation.z = Math.PI / 2; m.position.set((x0 + x1) / 2, yy, z); g.add(m);
+    });
+  }
+
+  var MODELS = {
+    hall: { cam: [0, 8.5, 21], look: [0, 2.5, -1], fov: 38, base: -14, build: function (g) {
+      floor(g, 24, 16, 'tiles', 2);
+      box(g, 6, 0.04, 16, 0xc9c9c6, -6, 0, 0);
+      box(g, 24, 9, 0.4, 0xd2d2cf, 0, 0, -8);
+      for (var x = -10.5; x <= 10.5; x += 3.5) box(g, 0.7, 9, 0.5, WHITE, x, 0, -7.6);
+      box(g, 0.4, 9, 16, 0xc4c4c1, 12, 0, 0);
+      for (var z = -6; z <= 6; z += 3) box(g, 0.5, 9, 0.7, WHITE, 11.6, 0, z);
+      for (var c = -9; c <= 9; c += 4.5) { box(g, 1.1, 3.4, 1.1, WOOD, c, 0, 1.2); box(g, 0.85, 5, 0.85, WHITE, c, 3.4, 1.2); }
+      box(g, 24, 1.4, 0.7, WOOD, 0, 6.6, 1.2);
+      box(g, 24, 1.4, 0.7, WOOD, 0, 6.6, -7.4);
+      box(g, 3, 1.6, 1.4, WHITE, 7.5, 0, -4.5);
+      box(g, 1.6, 2.6, 0.12, 0x6b3a1a, 9.5, 0, -7.7);
+    } },
+    modules: { cam: [3, 7, 15], look: [0, 1, -0.5], fov: 40, base: -18, build: function (g) {
+      floor(g, 16, 11, 'whiteTiles', 2.2);
+      wedge(g, 3.2, 1.3, 4.2, BLACK, WHITE, -7.8, 2.6, 0);
+      quarter(g, 1.8, 3.4, BLACK, WHITE, -5.4, -3.2, Math.PI);
+      extrude(g, [[0, 0], [3.4, 1.1], [7.6, 1.1], [7.6, 0], [0, 0]], 4.4, BLACK, WHITE, -3.2, 2.4, 0);
+      rail(g, [[-1.8, 0.95, 2.4], [0.2, 2.1, 2.4], [1.6, 1.6, 2.4], [3.2, 2.0, 2.4], [4.2, 1.6, 2.4]], ORANGE);
+      [-1.8, 0.2, 1.6, 3.2].forEach(function (x, i) { post(g, x, i ? 1.1 : 0.45, [0.95, 2.1, 1.6, 2.0][i], 2.4, ORANGE, 0.08); });
+      funbox(g, 1.2, 1.6, 1.2, 2.2, BLACK, BLACK, 2.6, -2.4, 0);
+      decal(g, 1.5, tex('stoneTop'), 2.6, 1.22, -2.4);
+      wallPanel(g, 4.6, 4.2, tex('tvs'), 0.2, 0, -5.2, 0);
+      wallPanel(g, 4.6, 4.2, tex('circle'), 5, 0, -5.2, 0);
+      box(g, 9.6, 0.5, 0.3, BLACK, 2.6, 0, -5.4);
+      box(g, 0.3, 4.2, 0.6, BLACK, 7.4, 0, -5.2);
+    } },
+    plan: { cam: [-13, 16, 22], look: [0, 0.2, 0.6], fov: 34, base: 22, build: function (g) {
+      floor(g, 24, 7, 'tiles', 1.75);
+      box(g, 24, 3.6, 0.2, WHITE, 0, 0, -3.6);
+      quarter(g, 2.8, 7, BLACK, BLACK, 7.2, 0, 0);
+      box(g, 1.5, 2.8, 7, BLACK, 11.0, 0, 0);
+      railing(g, 10.3, 11.7, 2.8, -3.3, ORANGE); railing(g, 10.3, 11.7, 2.8, 3.3, ORANGE);
+      var st = box(g, 0.25, 2.8, 7, 0x222222, 11.88, 0, 0); st.material = [mat(0, tex('stripes')), mat(0, tex('stripes')), mat(BLACK), mat(BLACK), mat(BLACK), mat(BLACK)];
+      extrude(g, [[0, 0], [1.6, 0.8], [4.6, 0.8], [6.2, 0], [0, 0]], 3.4, BLACK, BLACK, -1.2, 1.4, 0);
+      rail(g, [[-0.2, 1.4, 3.05], [1.6, 1.6, 3.05], [3.4, 1.6, 3.05], [5.0, 0.8, 3.05]], ORANGE);
+      funbox(g, 0.9, 1.4, 0.9, 2, BLACK, BLACK, -0.6, -1.8, 0);
+      decal(g, 1.3, tex('stoneTop'), -0.6, 0.92, -1.8);
+      wallPanel(g, 2.6, 1.7, tex('workwear'), -10.4, 1.4, -3.45, 0);
+      wallPanel(g, 1.6, 0.8, tex('soon'), -10.4, 0.4, -3.45, 0);
+      for (var i = 0; i < 3; i++) wallPanel(g, 1.2, 1.1, tex('tech' + i), -7.6 + i * 1.3, 2.0, -3.45, 0);
+      for (var k = 0; k < 4; k++) wallPanel(g, 0.9, 1.0, tex('poster'), -8.2 + k * 1.1, 0.7, -3.45, 0);
+      wallPanel(g, 2.4, 3.2, tex('tvs'), -2.6, 0, -3.45, 0);
+      wallPanel(g, 2.6, 3.2, tex('circle'), 0, 0, -3.45, 0);
+      wallPanel(g, 1.2, 2.2, tex('poster'), 1.9, 0.8, -3.45, 0);
+      box(g, 3, 1.3, 0.12, 0x101010, 5.6, 1.9, -3.45);
+      box(g, 3.2, 0.9, 1.8, BLACK, -10.4, 0, 2.4);
+      var ramp = wedge(g, 2.8, 0.9, 2.6, 0x9e1b1b, 0xb3201f, -12, 2.4, Math.PI);
+      ramp.position.x = -11.9;
+    } },
+    stand: { cam: [2, 4.6, 14], look: [0.6, 1.8, -1], fov: 40, base: -16, build: function (g) {
+      floor(g, 15, 8, 'tiles', 1.6);
+      box(g, 15, 4.4, 0.2, WHITE, 0, 0, -3.4);
+      quarter(g, 2.4, 3, 0x111111, 0x111111, -5.2, 0.6, Math.PI, tex('stripes'));
+      wallPanel(g, 3.4, 2.2, tex('workwear'), -4.3, 2.0, -3.25, 0);
+      wallPanel(g, 2.6, 1.2, tex('soon'), -4.3, 0.5, -3.25, 0);
+      box(g, 1.4, 3.8, 0.1, ORANGE, -1.7, 0.2, -3.25);
+      [[0x1c1c1c, 3.1], [0xa99a7a, 2.5], [0x1c1c1c, 1.9], [0x8a8f6a, 1.2]].forEach(function (c, i) { box(g, 0.55, 0.6, 0.06, c[0], -1.95 + (i % 2) * 0.55, c[1] - 0.2, -3.15); });
+      box(g, 0.25, 1.4, 0.05, 0xf2f2f2, -1.35, 2.4, -3.15); box(g, 0.25, 1.4, 0.05, 0xf2f2f2, -1.05, 2.4, -3.15);
+      for (var i = 0; i < 3; i++) wallPanel(g, 1.25, 1.2, tex('tech' + i), 0.1 + i * 1.35, 2.6, -3.25, 0);
+      for (var k = 0; k < 4; k++) wallPanel(g, 0.95, 1.05, tex('poster'), -0.2 + k * 1.15, 1.1, -3.25, 0);
+      wallPanel(g, 1.8, 3.4, tex('tvs'), 4.6, 0.4, -3.25, 0);
+      wallPanel(g, 2, 4.2, tex('circle'), 6.6, 0, -3.25, 0);
+      funbox(g, 0.8, 1.2, 0.8, 1.8, BLACK, 0xe8e8e8, 5.6, -0.6, 0);
+      decal(g, 1.1, tex('stoneTop'), 5.6, 0.82, -0.6);
+    } }
+  };
+
+  function viewer(shot, key, idx) {
+    var M = MODELS[key];
+    var renderer;
+    try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); } catch (e) { return null; }
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    var scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(M.fov, 16 / 9, 0.1, 200);
+    camera.position.set(M.cam[0], M.cam[1], M.cam[2]); camera.lookAt(M.look[0], M.look[1], M.look[2]);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0xbdbdb6, 0.95));
+    var sun = new THREE.DirectionalLight(0xffffff, 0.7); sun.position.set(-8, 18, 12); sun.castShadow = true;
+    sun.shadow.mapSize.set(1024, 1024); var sc = sun.shadow.camera; sc.left = -16; sc.right = 16; sc.top = 12; sc.bottom = -12; sc.far = 60;
+    scene.add(sun);
+    var group = new THREE.Group(); M.build(group); scene.add(group);
+    shot.appendChild(renderer.domElement);
+    shot.classList.add('is3d');
+    var angle = 0, raf = 0;
+    function draw() { raf = 0; group.rotation.y = THREE.MathUtils.degToRad(M.base + angle); renderer.render(scene, camera); }
+    function req() { if (!raf) raf = requestAnimationFrame(draw); }
+    function size() {
+      var w = shot.clientWidth, h = shot.clientHeight; if (!w || !h) return;
+      renderer.setSize(w, h, false); camera.aspect = w / h;
+      camera.zoom = Math.min(1, (w / h) / 1.6); camera.updateProjectionMatrix(); req();
+    }
+    if ('ResizeObserver' in window) new ResizeObserver(size).observe(shot); else window.addEventListener('resize', size);
+    size();
+    return { set: function (a) { angle = a; req(); } };
+  }
+
+  function arcControl(stage, onChange, start) {
     var arc = document.createElement('div');
     arc.className = 'arc'; arc.tabIndex = 0;
     arc.setAttribute('role', 'slider');
     arc.setAttribute('aria-valuemin', String(-MAX)); arc.setAttribute('aria-valuemax', String(MAX));
-    arc.setAttribute('data-i18n-aria', 'rotate'); arc.setAttribute('aria-label', lang === 'en' ? EN.rotate : FR.rotate);
+    arc.setAttribute('data-i18n-aria', 'rotate'); arc.setAttribute('aria-label', FR.rotate);
     arc.innerHTML = '<svg viewBox="0 0 200 64" aria-hidden="true"><path class="track" d="M10 8 A90 48 0 0 0 190 8"/><path class="fill" d=""/>' +
-      '<text class="end" x="0" y="4" text-anchor="middle">↺</text><text class="end" x="200" y="4" text-anchor="middle">↻</text></svg>' +
+      '<text class="end" x="-2" y="6" text-anchor="middle">↺</text><text class="end" x="202" y="6" text-anchor="middle">↻</text></svg>' +
       '<span class="knob" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
     stage.appendChild(arc);
-    var knob = arc.querySelector('.knob'), fill = arc.querySelector('.fill');
-    function pt(tt) { return { x: 100 + 90 * tt, y: 8 + 48 * Math.sqrt(Math.max(0, 1 - tt * tt)) }; }
+    var knob = arc.querySelector('.knob'), fill = arc.querySelector('.fill'), cur = 0;
+    function pt(t) { return { x: 100 + 90 * t, y: 8 + 48 * Math.sqrt(Math.max(0, 1 - t * t)) }; }
     function set(deg) {
-      deg = Math.max(-MAX, Math.min(MAX, deg));
-      var tt = deg / MAX, p = pt(tt), c = pt(0);
-      stage.style.setProperty('--ry', deg + 'deg');
-      stage.style.setProperty('--tilt', String(Math.abs(tt)));
-      stage.style.setProperty('--shift', (-deg * 0.6) + 'px');
-      knob.style.left = (p.x / 2) + '%';
-      knob.style.top = (p.y / 64 * 100) + '%';
-      var sweep = tt >= 0 ? 0 : 1;
-      fill.setAttribute('d', Math.abs(tt) < 0.01 ? '' : 'M' + c.x + ' ' + c.y + ' A90 48 0 0 ' + sweep + ' ' + p.x.toFixed(1) + ' ' + p.y.toFixed(1));
-      arc.setAttribute('aria-valuenow', String(Math.round(deg)));
-      arc.setAttribute('aria-valuetext', Math.round(deg) + '°');
-      stage._deg = deg;
+      cur = Math.max(-MAX, Math.min(MAX, deg));
+      var t = cur / MAX, p = pt(t), c = pt(0);
+      knob.style.left = (p.x / 2) + '%'; knob.style.top = (p.y / 64 * 100) + '%';
+      fill.setAttribute('d', Math.abs(t) < 0.01 ? '' : 'M' + c.x + ' ' + c.y + ' A90 48 0 0 ' + (t >= 0 ? 0 : 1) + ' ' + p.x.toFixed(1) + ' ' + p.y.toFixed(1));
+      arc.setAttribute('aria-valuenow', String(Math.round(cur))); arc.setAttribute('aria-valuetext', Math.round(cur) + '°');
+      onChange(cur);
     }
-    function fromEvent(e) {
-      var b = arc.getBoundingClientRect();
-      var tt = ((e.clientX - b.left) / b.width) * 2 - 1;
-      set(tt * MAX);
-    }
-    arc.addEventListener('pointerdown', function (e) {
-      arc.setPointerCapture(e.pointerId); stage.classList.add('dragging'); stage.classList.remove('hint'); fromEvent(e); e.preventDefault();
-    });
-    arc.addEventListener('pointermove', function (e) { if (stage.classList.contains('dragging')) fromEvent(e); });
+    function fromX(clientX) { var b = arc.getBoundingClientRect(); set((((clientX - b.left) / b.width) * 2 - 1) * MAX); }
+    arc.addEventListener('pointerdown', function (e) { arc.setPointerCapture(e.pointerId); stage.classList.add('dragging'); stage.classList.remove('hint'); fromX(e.clientX); e.preventDefault(); });
+    arc.addEventListener('pointermove', function (e) { if (stage.classList.contains('dragging')) fromX(e.clientX); });
     function end() { stage.classList.remove('dragging'); }
     arc.addEventListener('pointerup', end); arc.addEventListener('pointercancel', end);
     arc.addEventListener('keydown', function (e) {
-      var d = stage._deg;
-      if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') d -= 6;
-      else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') d += 6;
-      else if (e.key === 'Home') d = -MAX;
-      else if (e.key === 'End') d = MAX;
-      else return;
+      var d = cur;
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') d -= 6; else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') d += 6;
+      else if (e.key === 'Home') d = -MAX; else if (e.key === 'End') d = MAX; else return;
       e.preventDefault(); set(d);
     });
-    set(i % 2 ? 16 : -16);
-    if ('IntersectionObserver' in window) {
-      var io = new IntersectionObserver(function (en) {
-        en.forEach(function (x) { if (x.isIntersecting) { stage.classList.add('hint'); io.disconnect(); } });
-      }, { threshold: 0.6 });
-      io.observe(stage);
-    }
-  });
+    set(start || 0);
+    return { set: set, get: function () { return cur; } };
+  }
+
+  FR.rotate = 'Faire tourner le schéma en 3D';
+  if (window.THREE) {
+    document.querySelectorAll('.build [data-model]').forEach(function (shot, i) {
+      var stage = document.createElement('div'); stage.className = 'stage3d';
+      shot.parentNode.insertBefore(stage, shot); stage.appendChild(shot);
+      var v = null, ctl = null;
+      function init() {
+        if (v) return;
+        v = viewer(shot, shot.getAttribute('data-model'), i);
+        if (!v) return;
+        shot.insertAdjacentHTML('beforeend', '<span class="badge3d" aria-hidden="true">3D</span>');
+        ctl = arcControl(stage, function (a) { v.set(a); }, 0);
+        // Drag on the model itself also turns it; a real drag does not open the viewer
+        var sx = null, sa = 0;
+        shot.addEventListener('pointerdown', function (e) { sx = e.clientX; sa = ctl.get(); shot._dragged = false; });
+        shot.addEventListener('pointermove', function (e) {
+          if (sx === null) return;
+          var dx = e.clientX - sx;
+          if (Math.abs(dx) > 5) { shot._dragged = true; stage.classList.add('dragging'); ctl.set(sa + dx / shot.clientWidth * 2 * MAX); }
+        });
+        function up() { sx = null; stage.classList.remove('dragging'); }
+        shot.addEventListener('pointerup', up); shot.addEventListener('pointerleave', up); shot.addEventListener('pointercancel', up);
+        if (lang === 'en') stage.querySelector('.arc').setAttribute('aria-label', EN.rotate);
+      }
+      if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function (en) {
+          en.forEach(function (x) {
+            if (x.isIntersecting) { init(); if (x.intersectionRatio > 0.55) { stage.classList.add('hint'); io.disconnect(); } }
+          });
+        }, { rootMargin: '300px 0px', threshold: [0, 0.6] });
+        io.observe(stage);
+      } else init();
+    });
+  }
 
   /* ---------- Photo viewer ---------- */
   var lb = document.getElementById('lb'), lbImg = document.getElementById('lb-img'), lbCap = document.getElementById('lb-cap');
@@ -1099,7 +1356,7 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
     lbIndex = -1;
     if (lastFocus) lastFocus.focus();
   }
-  shots.forEach(function (s, i) { s.addEventListener('click', function () { openLb(i); }); });
+  shots.forEach(function (s, i) { s.addEventListener('click', function () { if (s._dragged) { s._dragged = false; return; } openLb(i); }); });
   document.getElementById('lb-close').addEventListener('click', closeLb);
   document.getElementById('lb-prev').addEventListener('click', function () { showLb(lbIndex - 1); });
   document.getElementById('lb-next').addEventListener('click', function () { showLb(lbIndex + 1); });
