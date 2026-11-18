@@ -1141,8 +1141,8 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
 
   var MODELS = {
     hall: { cam: [-0.5, 3.4, 16], look: [-0.5, 2.6, -14], fov: 50, rot: 1 / 3,
-      // the cursor drives a curved dolly: from a few metres past the 2nd pillar of the right wall back to the view above
-      path: { from: [11, 3.4, -3.6], via: [11, 3.4, 14], fromLook: [-10.4, 2.6, -3.6] }, build: function (g) {   // model supplied by Carl (carte-01-hall-3d.html)
+      // the cursor drives a curved dolly: from the 4th pillar of the right wall back to the view above
+      path: { from: [11, 3.4, -7.8], via: [11, 3.4, 14], fromLook: [-10.4, 2.6, -7.8] }, build: function (g) {   // model supplied by Carl (carte-01-hall-3d.html)
       var ht = canvasTex(256, 256, function (c, w, h) {
         c.fillStyle = '#6e6e6c'; c.fillRect(0, 0, w, h); c.strokeStyle = '#585856'; c.lineWidth = 2;
         c.setLineDash([10, 8]); c.strokeRect(0, 0, w, h);
