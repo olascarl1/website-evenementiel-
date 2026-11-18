@@ -712,7 +712,7 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
     <ol class="build">
       <li class="b-hall">
         <button type="button" class="shot zoom" data-model="hall"><img src="assets/hall-sketchup.jpg" alt="Modélisation SketchUp du hall du JICC, colonnes et circulations" data-i18n-alt="altHall" width="1400" height="787" loading="lazy"><span class="zoom-hint" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span></button>
-        <div class="cap"><span class="step-num">01</span><p data-i18n="b1"><strong>Relevé du hall.</strong> Le lieu modélisé dans SketchUp pour caler l'emprise entre les colonnes.</p></div>
+        <div class="cap"><span class="step-num">01</span><p data-i18n="b1"><strong>Relevé du hall.</strong> Le lieu modélisé dans SketchUp pour caler l'emprise du skatepark (8 × 26 m) entre les colonnes.</p></div>
       </li>
       <li class="b-3d">
         <button type="button" class="shot paper zoom" data-model="modules"><img src="assets/skatepark-3d-rail.jpg" alt="Rendu 3D du skatepark : rail orange, plans inclinés et mur Volcom × Televisi Star" data-i18n-alt="alt3d" width="1080" height="514" loading="lazy"><span class="zoom-hint" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span></button>
@@ -887,7 +887,7 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
     bTitle: 'From plan to opening&nbsp;day',
     bP: 'The skatepark and the booth were <span class="hi">designed for the hall</span>, then built in a workshop and installed on site. Here are the steps, from the venue survey to opening day.',
     altHall: 'SketchUp model of the JICC hall, columns and walkways',
-    b1: '<strong>Venue survey.</strong> The hall modelled in SketchUp to fit the footprint between the columns.',
+    b1: '<strong>Venue survey.</strong> The hall modelled in SketchUp to fit the skatepark footprint (8 × 26 m) between the columns.',
     alt3d: '3D render of the skatepark: orange rail, banks and Volcom × Televisi Star wall',
     b2: '<strong>Obstacles.</strong> Orange rail, banks and a Volcom-logo funbox, in front of the Televisi Star wall.',
     altIso: 'Isometric view of the area: quarter pipe with deck, rail, funbox, booth and brand wall',
@@ -1140,18 +1140,29 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
   }
 
   var MODELS = {
-    hall: { cam: [0, 8.5, 21], look: [0, 2.5, -1], fov: 38, base: -14, build: function (g) {
-      floor(g, 24, 16, 'tiles', 2);
-      box(g, 6, 0.04, 16, 0xc9c9c6, -6, 0, 0);
-      box(g, 24, 9, 0.4, 0xd2d2cf, 0, 0, -8);
-      for (var x = -10.5; x <= 10.5; x += 3.5) box(g, 0.7, 9, 0.5, WHITE, x, 0, -7.6);
-      box(g, 0.4, 9, 16, 0xc4c4c1, 12, 0, 0);
-      for (var z = -6; z <= 6; z += 3) box(g, 0.5, 9, 0.7, WHITE, 11.6, 0, z);
-      for (var c = -9; c <= 9; c += 4.5) { box(g, 1.1, 3.4, 1.1, WOOD, c, 0, 1.2); box(g, 0.85, 5, 0.85, WHITE, c, 3.4, 1.2); }
-      box(g, 24, 1.4, 0.7, WOOD, 0, 6.6, 1.2);
-      box(g, 24, 1.4, 0.7, WOOD, 0, 6.6, -7.4);
-      box(g, 3, 1.6, 1.4, WHITE, 7.5, 0, -4.5);
-      box(g, 1.6, 2.6, 0.12, 0x6b3a1a, 9.5, 0, -7.7);
+    hall: { cam: [-0.5, 3.4, 16], look: [-0.5, 2.6, -14], fov: 50, rot: 1 / 3, build: function (g) {   // model supplied by Carl (carte-01-hall-3d.html)
+      var ht = canvasTex(256, 256, function (c, w, h) {
+        c.fillStyle = '#6e6e6c'; c.fillRect(0, 0, w, h); c.strokeStyle = '#585856'; c.lineWidth = 2;
+        c.setLineDash([10, 8]); c.strokeRect(0, 0, w, h);
+      });
+      ht.wrapS = ht.wrapT = THREE.RepeatWrapping; ht.repeat.set(9, 16);
+      var fl = box(g, 27, 0.1, 48, 0xffffff, 1.5, -0.1, -18, 0);
+      fl.material = [mat(0x555555), mat(0x555555), mat(0, ht), mat(0x555555), mat(0x555555), mat(0x555555)];
+      box(g, 8, 0.03, 26, 0xc4c4c1, -6.3, 0, -9);                                  // skatepark footprint
+      box(g, 0.25, 9, 48, 0x9a9a98, -10.5, 0, -18);                                // left wall
+      box(g, 0.25, 9, 48, 0xa4a4a1, 14.5, 0, -18);                                 // right wall
+      box(g, 25, 9, 0.25, 0xe9e9e7, 2, 0, -42);                                    // far wall
+      box(g, 4, 3.2, 0.3, 0x1c1c1c, -4, 0, -41.8);                                 // dark opening at the far end
+      for (var z = 3; z >= -40; z -= 3.6) { box(g, 0.6, 9, 0.5, WHITE, -10.1, 0, z); box(g, 0.6, 9, 0.5, WHITE, 14.1, 0, z); }
+      box(g, 0.1, 0.25, 48, 0x111111, -10.3, 0.9, -18);                             // black band along the left wall
+      for (var c = 4; c >= -38; c -= 6.5) {                                         // column line beside the footprint
+        box(g, 1.1, 2.7, 1.1, WOOD, -1.2, 0, c); box(g, 0.85, 6.3, 0.85, WHITE, -1.2, 2.7, c);
+      }
+      box(g, 25, 1.3, 0.8, WOOD, 2, 6.3, 4);                                        // wooden beam band at the front
+      box(g, 25, 1.4, 0.8, 0xf2f2f0, 2, 7.6, 4);
+      box(g, 1.2, 9, 1.2, WHITE, -1.2, 0, 4.6);                                     // front white column
+      box(g, 4.5, 1.3, 1.4, WHITE, 6.5, 0, -12);                                    // white counter
+      box(g, 0.1, 2.6, 1.8, 0x6b3a1a, 14.35, 0, -3);                                // double door, right wall
     } },
     modules: { cam: [3, 7, 15], look: [0, 1, -0.5], fov: 40, base: -18, build: function (g) {
       floor(g, 16, 11, 'whiteTiles', 2.2);
@@ -1215,17 +1226,25 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     var scene = new THREE.Scene();
-    var camera = new THREE.PerspectiveCamera(M.fov, 16 / 9, 0.1, 200);
+    var camera = new THREE.PerspectiveCamera(M.fov, 16 / 9, 0.1, 300);
     camera.position.set(M.cam[0], M.cam[1], M.cam[2]); camera.lookAt(M.look[0], M.look[1], M.look[2]);
     scene.add(new THREE.HemisphereLight(0xffffff, 0xbdbdb6, 0.95));
     var sun = new THREE.DirectionalLight(0xffffff, 0.7); sun.position.set(-8, 18, 12); sun.castShadow = true;
     sun.shadow.mapSize.set(1024, 1024); var sc = sun.shadow.camera; sc.left = -16; sc.right = 16; sc.top = 12; sc.bottom = -12; sc.far = 60;
+    // Models with a rot factor (the hall) turn around the camera target, with the lighting of Carl's file
+    var piv = M.rot ? M.look : [0, 0, 0];
+    if (M.rot) {
+      sun.intensity = 0.65; sun.position.set(-6, 22, 14); sun.shadow.mapSize.set(2048, 2048);
+      sc.left = -30; sc.right = 30; sc.top = 30; sc.bottom = -30; sc.far = 90;
+      sun.target.position.set(piv[0], 0, piv[2]); scene.add(sun.target);
+    }
     scene.add(sun);
-    var group = new THREE.Group(); M.build(group); scene.add(group);
+    var pivot = new THREE.Group(); pivot.position.set(piv[0], 0, piv[2]); scene.add(pivot);
+    var group = new THREE.Group(); group.position.set(-piv[0], 0, -piv[2]); M.build(group); pivot.add(group);
     shot.appendChild(renderer.domElement);
     shot.classList.add('is3d');
     var angle = 0, raf = 0;
-    function draw() { raf = 0; group.rotation.y = THREE.MathUtils.degToRad(M.base + angle); renderer.render(scene, camera); }
+    function draw() { raf = 0; pivot.rotation.y = THREE.MathUtils.degToRad(M.rot ? angle * M.rot : M.base + angle); renderer.render(scene, camera); }
     function req() { if (!raf) raf = requestAnimationFrame(draw); }
     function size() {
       var w = shot.clientWidth, h = shot.clientHeight; if (!w || !h) return;
