@@ -1140,7 +1140,9 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
   }
 
   var MODELS = {
-    hall: { cam: [-0.5, 3.4, 16], look: [-0.5, 2.6, -14], fov: 50, rot: 1 / 3, build: function (g) {   // model supplied by Carl (carte-01-hall-3d.html)
+    hall: { cam: [-0.5, 3.4, 16], look: [-0.5, 2.6, -14], fov: 50, rot: 1 / 3,
+      // the cursor drives a curved dolly: from a few metres past the 2nd pillar of the right wall back to the view above
+      path: { from: [11, 3.4, -3.6], via: [11, 3.4, 14], fromLook: [-1, 1.6, -30] }, build: function (g) {   // model supplied by Carl (carte-01-hall-3d.html)
       var ht = canvasTex(256, 256, function (c, w, h) {
         c.fillStyle = '#6e6e6c'; c.fillRect(0, 0, w, h); c.strokeStyle = '#585856'; c.lineWidth = 2;
         c.setLineDash([10, 8]); c.strokeRect(0, 0, w, h);
@@ -1243,8 +1245,14 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
     var group = new THREE.Group(); group.position.set(-piv[0], 0, -piv[2]); M.build(group); pivot.add(group);
     shot.appendChild(renderer.domElement);
     shot.classList.add('is3d');
-    var angle = 0, raf = 0;
-    function draw() { raf = 0; pivot.rotation.y = THREE.MathUtils.degToRad(M.rot ? angle * M.rot : M.base + angle); renderer.render(scene, camera); }
+    var P = M.path, angle = P ? -MAX : 0, raf = 0;
+    function dolly(a) {
+      var t = (a + MAX) / (2 * MAX); t = t * t * (3 - 2 * t);
+      var q = function (i) { return (1 - t) * (1 - t) * P.from[i] + 2 * (1 - t) * t * P.via[i] + t * t * M.cam[i]; };
+      var l = function (i) { return P.fromLook[i] + (M.look[i] - P.fromLook[i]) * t; };
+      camera.position.set(q(0), q(1), q(2)); camera.lookAt(l(0), l(1), l(2));
+    }
+    function draw() { raf = 0; if (P) dolly(angle); else pivot.rotation.y = THREE.MathUtils.degToRad(M.rot ? angle * M.rot : M.base + angle); renderer.render(scene, camera); }
     function req() { if (!raf) raf = requestAnimationFrame(draw); }
     function size() {
       var w = shot.clientWidth, h = shot.clientHeight; if (!w || !h) return;
@@ -1253,7 +1261,7 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
     }
     if ('ResizeObserver' in window) new ResizeObserver(size).observe(shot); else window.addEventListener('resize', size);
     size();
-    return { set: function (a) { angle = a; req(); } };
+    return { set: function (a) { angle = a; req(); }, start: angle };
   }
 
   function arcControl(stage, onChange, start) {
@@ -1302,7 +1310,7 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
         v = viewer(shot, shot.getAttribute('data-model'), i);
         if (!v) return;
         shot.insertAdjacentHTML('beforeend', '<span class="badge3d" aria-hidden="true">3D</span>');
-        ctl = arcControl(stage, function (a) { v.set(a); }, 0);
+        ctl = arcControl(stage, function (a) { v.set(a); }, v.start);
         // Drag on the model itself also turns it; a real drag does not open the viewer
         var sx = null, sa = 0;
         shot.addEventListener('pointerdown', function (e) { sx = e.clientX; sa = ctl.get(); shot._dragged = false; });
