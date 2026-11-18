@@ -310,9 +310,11 @@ button.frame { border: 0; }
 .lb-img img { max-width: 100%; max-height: calc(100vh - 32px); object-fit: contain; }
 .lb-side { padding: 22px; display: flex; flex-direction: column; gap: 16px; color: #b4b4b0; overflow-y: auto; }
 .lb-side .lb-cap { margin: 0; font-size: 15px; line-height: 1.5; color: #f4f4f2; }
-.lb-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; overflow: hidden; margin: 0; }
-.lb-stats div { padding: 12px 10px; border-left: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
-.lb-stats div:first-child { border-left: 0; }
+.lb-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; overflow: hidden; margin: 0; }
+.lb-stats div:nth-child(odd) { border-left: 0; }
+.lb-stats div:nth-child(n+3) { border-top: 1px solid rgba(255,255,255,0.1); }
+.lb-stats div { padding: 12px 14px; border-left: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+
 .lb-stats dt { display: flex; align-items: center; gap: 6px; font-family: var(--font-display); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #8f8f8c; }
 .lb-stats dt svg { width: 13px; height: 13px; }
 .lb-stats dd { margin: 0; font-family: var(--font-display); font-size: 22px; font-weight: 600; color: #f4f4f2; font-variant-numeric: tabular-nums; }
@@ -742,8 +744,10 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
       <dl class="lb-stats" id="lb-stats" hidden>
         <div><dt><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg><span data-i18n="lbViews">Vues</span></dt><dd id="lb-views">–</dd></div>
         <div><dt><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span data-i18n="lbLikes">J'aime</span></dt><dd id="lb-likes">–</dd></div>
+        <div><dt><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span data-i18n="lbComments">Commentaires</span></dt><dd id="lb-comments">–</dd></div>
         <div><dt><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4 18-7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span data-i18n="lbShares">Partages</span></dt><dd id="lb-shares">–</dd></div>
       </dl>
+      <p class="lb-note" id="lb-date" hidden></p>
       <a class="btn btn-ghost lb-ig" id="lb-ig" href="#" target="_blank" rel="noopener" hidden>
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/></svg>
         <span data-i18n="lbIg">Voir le post sur Instagram ↗</span>
@@ -764,8 +768,8 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
   /* ---------- Instagram figures shown in the photo viewer ----------
      Fill in the numbers (e.g. views: 12400). Leave null to hide the figures. */
   var IG = {
-    DQYzFVNEfia: { views: null, likes: null, shares: null },
-    DQrIq86kwJG: { views: null, likes: null, shares: null }
+    DQYzFVNEfia: { date: '2025-10-29', views: 189000, likes: 5976, comments: 222, shares: 1019 },
+    DQrIq86kwJG: { date: '2025-11-05', views: 275000, likes: 1853, comments: 110, shares: 193 }
   };
 
   /* ---------- English strings (French is read from the page itself) ---------- */
@@ -850,11 +854,11 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
     cTitle: "Let's talk about your next event. <em>Permanent, fixed-term or freelance.</em>",
     copy: 'Copy', footVideo: 'Video and drone:',
     lbClose: 'Close', lbPrev: 'Previous photo', lbNext: 'Next photo',
-    lbViews: 'Views', lbLikes: 'Likes', lbShares: 'Shares', lbIg: 'See the post on Instagram ↗'
+    lbViews: 'Views', lbLikes: 'Likes', lbComments: 'Comments', lbShares: 'Shares', lbIg: 'See the post on Instagram ↗'
   };
   var MSG = {
-    fr: { copied: 'Copié : ', fail: 'Copie impossible ici. Sélectionne le texte : ', title: 'Carl Bourguignon, chef de projet événementiel', toDay: 'Passer en mode jour', toNight: 'Passer en mode nuit', locale: 'fr-FR' },
-    en: { copied: 'Copied: ', fail: 'Copy is blocked here. Select the text: ', title: 'Carl Bourguignon, event project manager', toDay: 'Switch to day mode', toNight: 'Switch to night mode', locale: 'en-GB' }
+    fr: { copied: 'Copié : ', fail: 'Copie impossible ici. Sélectionne le texte : ', title: 'Carl Bourguignon, chef de projet événementiel', toDay: 'Passer en mode jour', toNight: 'Passer en mode nuit', locale: 'fr-FR', posted: 'Publié sur Instagram le ' },
+    en: { copied: 'Copied: ', fail: 'Copy is blocked here. Select the text: ', title: 'Carl Bourguignon, event project manager', toDay: 'Switch to day mode', toNight: 'Switch to night mode', locale: 'en-GB', posted: 'Posted on Instagram on ' }
   };
 
   /* Capture the French originals once */
@@ -934,7 +938,11 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
   var lbStats = document.getElementById('lb-stats'), lbIg = document.getElementById('lb-ig'), lbCount = document.getElementById('lb-count');
   var shots = Array.prototype.slice.call(document.querySelectorAll('.zoom'));
   var lbIndex = -1, lastFocus = null;
-  function fmt(n) { return n == null ? '–' : Number(n).toLocaleString(MSG[lang].locale); }
+  function fmt(n) {
+    if (n == null) return '–';
+    var o = n >= 10000 ? { notation: 'compact', maximumFractionDigits: 1 } : {};
+    try { return new Intl.NumberFormat(MSG[lang].locale, o).format(n); } catch (e) { return String(n); }
+  }
   function showLb(i) {
     lbIndex = (i + shots.length) % shots.length;
     var s = shots[lbIndex], img = s.querySelector('img');
@@ -950,7 +958,14 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
     if (has) {
       document.getElementById('lb-views').textContent = fmt(st.views);
       document.getElementById('lb-likes').textContent = fmt(st.likes);
+      document.getElementById('lb-comments').textContent = fmt(st.comments);
       document.getElementById('lb-shares').textContent = fmt(st.shares);
+    }
+    var lbDate = document.getElementById('lb-date');
+    lbDate.hidden = !(st && st.date);
+    if (st && st.date) {
+      var d = new Date(st.date + 'T12:00:00');
+      lbDate.textContent = MSG[lang].posted + d.toLocaleDateString(MSG[lang].locale, { day: 'numeric', month: 'long', year: 'numeric' });
     }
     lbCount.textContent = (lbIndex + 1) + ' / ' + shots.length;
   }
