@@ -38,6 +38,8 @@
   --paper: #f3f2ef;
   --paper-ink: #3d3d3b;
   --header: rgba(12, 12, 12, 0.82);
+  --edge-a: #2b2b29;
+  --edge-b: #3a3a37;
   --font-display: "Sora", "Avenir Next", "Segoe UI", system-ui, sans-serif;
   --font-body: "Inter", "Helvetica Neue", Arial, system-ui, sans-serif;
   --wrap: 1180px;
@@ -45,6 +47,8 @@
   color-scheme: dark;
 }
 :root[data-theme="light"] {
+  --edge-a: #c9c9c4;
+  --edge-b: #e2e2de;
   --bg: #eeeeec;
   --surface: #ffffff;
   --line: rgba(20, 20, 18, 0.09);
@@ -103,7 +107,22 @@ a:hover { color: var(--accent); }
 }
 .nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 68px; }
 .brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 600; font-size: 15px; color: var(--text); text-decoration: none; white-space: nowrap; }
-.brand svg { width: 20px; height: 20px; flex: none; }
+/* Language switch with flags */
+.lang-switch { position: relative; display: inline-grid; grid-template-columns: 1fr 1fr; padding: 4px; border: 1px solid var(--border); border-radius: 999px; }
+.lang-switch::before {
+  content: ""; position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px);
+  border-radius: 999px; background: var(--text); transition: transform .35s cubic-bezier(.3,1.3,.5,1);
+}
+:root[lang="en"] .lang-switch::before { transform: translateX(100%); }
+.lang-switch button {
+  position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  min-height: 34px; padding: 0 12px; border: 0; border-radius: 999px; background: transparent; cursor: pointer;
+  font-family: var(--font-display); font-size: 13px; font-weight: 600; color: var(--soft); transition: color .25s ease;
+}
+.lang-switch button[aria-pressed="true"] { color: var(--bg); }
+.lang-switch button:not([aria-pressed="true"]):hover { color: var(--accent); }
+.flag { width: 18px; height: 12px; border-radius: 2px; flex: none; box-shadow: 0 0 0 1px rgba(127,127,127,0.35); }
+.menu-cta { width: 100%; justify-content: center; }
 .nav-links { display: flex; gap: 24px; list-style: none; margin: 0; padding: 0; font-family: var(--font-display); font-size: 14px; }
 .nav-links a { color: var(--soft); text-decoration: none; padding: 6px 0; border-bottom: 2px solid transparent; }
 .nav-links a:hover, .nav-links a.active { color: var(--accent); border-bottom-color: var(--accent); }
@@ -254,7 +273,7 @@ section.block { padding: 96px 0 24px; }
 .zoom { cursor: zoom-in; }
 button.zoom { display: block; width: 100%; padding: 0; margin: 0; font: inherit; color: inherit; text-align: inherit; position: relative; overflow: hidden; }
 button.frame { border: 0; }
-.build button.shot { border: 1px solid var(--line); }
+.build button.shot { border: 1px solid var(--line); border-radius: 18px; }
 .build button.paper { border-color: transparent; }
 .act button.shot { border: 0; border-bottom: 1px solid var(--line); background: var(--surface); }
 .act .shot img { width: 100%; height: 100%; object-fit: cover; }
@@ -315,7 +334,8 @@ button.frame { border: 0; }
 .lb-stats dt svg { width: 13px; height: 13px; }
 .lb-stats dd { margin: 0; font-family: var(--font-display); font-size: 22px; font-weight: 600; color: #f4f4f2; font-variant-numeric: tabular-nums; }
 .lb-note { font-size: 12.5px; color: #8f8f8c; margin: 0; }
-.lb-ig { align-self: flex-start; color: #f4f4f2; border-color: rgba(255,255,255,0.22); white-space: nowrap; font-size: 13px; padding: 0 16px; }
+.lb-ig { align-self: flex-start; background: var(--sky-orange); color: #1a0d05; border-color: var(--sky-orange); white-space: nowrap; font-size: 13.5px; padding: 0 18px; box-shadow: 0 8px 24px rgba(255,122,59,0.28); }
+.lb-ig:hover { background: #ff9461; border-color: #ff9461; color: #1a0d05; }
 @media (min-width: 761px) { .lb-side { padding-top: 64px; } }
 .lb-ig svg { width: 16px; height: 16px; }
 .lb-nav { display: flex; gap: 8px; margin-top: auto; }
@@ -356,6 +376,41 @@ button.frame { border: 0; }
 .build .cap .step-num { min-width: 22px; }
 .build .cap p { margin: 0; font-size: 15px; line-height: 1.5; }
 .build .cap strong { color: var(--text); font-weight: 500; font-family: var(--font-display); }
+/* Fake 3D plans: lateral rotation driven by a half-arc cursor */
+.stage3d { position: relative; perspective: 1300px; perspective-origin: 50% 40%; padding-bottom: 30px; --ry: 0deg; }
+.plane { position: relative; transform-style: preserve-3d; transform: rotateY(var(--ry)) scale(0.94); transition: transform .5s cubic-bezier(.2,.8,.3,1); }
+.stage3d.dragging .plane { transition: transform .08s linear; }
+.plane > .shot { position: relative; z-index: 1; box-shadow: 0 30px 50px -28px rgba(0,0,0,0.55); }
+.edge { position: absolute; top: 0; height: 100%; width: 16px; border-radius: 3px; background: linear-gradient(90deg, var(--edge-a), var(--edge-b)); }
+.edge-l { left: 0; transform-origin: left center; transform: rotateY(90deg); }
+.edge-r { right: 0; transform-origin: right center; transform: rotateY(-90deg); }
+.stage3d::after {
+  content: ""; position: absolute; left: 12%; right: 12%; bottom: 8px; height: 26px; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0,0,0,0.38), transparent); filter: blur(4px);
+  transform: translateX(var(--shift, 0px)) scaleX(calc(1 - var(--tilt, 0) * 0.25)); pointer-events: none; z-index: -1;
+}
+.badge3d {
+  position: absolute; left: 14px; top: 14px; z-index: 3; padding: 5px 10px; border-radius: 999px;
+  font-family: var(--font-display); font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+  background: rgba(12,12,12,0.7); color: #fff; backdrop-filter: blur(6px); pointer-events: none;
+  transform: translateZ(1px);
+}
+.arc { position: absolute; left: 50%; bottom: 0; width: min(62%, 360px); aspect-ratio: 200 / 64; transform: translateX(-50%); z-index: 4; cursor: ew-resize; touch-action: none; border-radius: 0 0 50% 50%; }
+.arc svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.arc .track { fill: none; stroke: var(--border); stroke-width: 3; stroke-dasharray: 2 7; stroke-linecap: round; }
+.arc .fill { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
+.arc .end { font-family: var(--font-display); font-size: 11px; fill: var(--label); }
+.knob {
+  position: absolute; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 0 5px var(--accent-glow), 0 6px 16px rgba(0,0,0,0.35);
+  display: grid; place-items: center; color: #1a0d05; transition: transform .2s ease;
+}
+.knob svg { position: static; width: 14px; height: 14px; }
+.arc:hover .knob, .arc:focus-visible .knob, .stage3d.dragging .knob { transform: scale(1.15); }
+.arc:focus-visible { outline: none; }
+.arc:focus-visible .knob { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent); }
+.stage3d.hint .knob { animation: nudge 1.8s ease-in-out 2; }
+@keyframes nudge { 0%,100% { translate: 0 0; } 30% { translate: -10px -2px; } 70% { translate: 10px -2px; } }
 .b-hall { grid-column: span 3; } .b-hall .shot { aspect-ratio: 16 / 9; }
 .b-3d { grid-column: span 3; } .b-3d .shot { aspect-ratio: 16 / 9; }
 .b-iso { grid-column: span 6; } .b-iso .shot { aspect-ratio: 1600 / 640; }
@@ -416,7 +471,9 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
 }
 @media (max-width: 560px) {
   body { font-size: 16px; }
-  .nav-cta { display: none; }
+  .menu-btn span, .menu-btn .chev { display: none; }
+  .menu-btn { padding: 0; width: 44px; justify-content: center; }
+  .lang-switch button { padding: 0 9px; gap: 5px; font-size: 12px; }
   .stats li, .stats li + li { padding: 20px 14px 22px 0; }
   .stats li:nth-child(even) { padding-left: 14px; }
   .facts { grid-template-columns: 1fr; }
@@ -450,7 +507,6 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
         <svg class="moon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 14.6A8.2 8.2 0 0 1 9.4 4a8.2 8.2 0 1 0 10.6 10.6z" fill="currentColor"/><circle cx="17.5" cy="5.5" r="1" fill="currentColor"/><circle cx="20.5" cy="9" r="0.7" fill="currentColor"/></svg>
       </button>
       <a class="brand" href="#top" aria-label="Carl Bourguignon" data-i18n-aria="brandAria">
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" fill="currentColor"/><path d="M10 8.5v7l5.5-3.5L10 8.5z" fill="var(--bg)"/><path d="M5 6h1.6M5 10h1.6M5 14h1.6M5 18h1.6M17.4 6H19M17.4 10H19M17.4 14H19M17.4 18H19" stroke="var(--bg)" stroke-width="1.6"/></svg>
         <span class="brand-name">Carl Bourguignon</span>
       </a>
     </div>
@@ -462,6 +518,10 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
       <li><a href="#parcours" data-i18n="navAbout">Parcours</a></li>
     </ul>
     <div class="nav-right">
+      <div class="lang-switch" role="group" aria-label="Langue" data-i18n-aria="langTitle">
+        <button type="button" id="lang-fr" data-lang="fr" aria-pressed="true" lang="fr" aria-label="Français"><svg class="flag" viewBox="0 0 3 2" aria-hidden="true"><rect width="1" height="2" fill="#002654"/><rect x="1" width="1" height="2" fill="#fff"/><rect x="2" width="1" height="2" fill="#ce1126"/></svg><span>FR</span></button>
+        <button type="button" id="lang-en" data-lang="en" aria-pressed="false" lang="en" aria-label="English"><svg class="flag" viewBox="0 0 60 40" aria-hidden="true"><clipPath id="uk-c"><rect width="60" height="40"/></clipPath><g clip-path="url(#uk-c)"><rect width="60" height="40" fill="#012169"/><path d="M0 0l60 40M60 0L0 40" stroke="#fff" stroke-width="8"/><path d="M0 0l60 40M60 0L0 40" stroke="#c8102e" stroke-width="3"/><path d="M30 0v40M0 20h60" stroke="#fff" stroke-width="12"/><path d="M30 0v40M0 20h60" stroke="#c8102e" stroke-width="7"/></g></svg><span>EN</span></button>
+      </div>
       <div class="menu">
         <button class="btn btn-ghost menu-btn" type="button" id="menu-btn" aria-expanded="false" aria-controls="menu-panel">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -482,15 +542,10 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
             </ol>
           </nav>
           <div class="menu-group">
-            <p class="menu-title" id="lang-title" data-i18n="langTitle">Langue</p>
-            <div class="seg" role="group" aria-labelledby="lang-title">
-              <button type="button" id="lang-fr" data-lang="fr" aria-pressed="true">Français</button>
-              <button type="button" id="lang-en" data-lang="en" aria-pressed="false">English</button>
-            </div>
+            <a class="btn btn-solid menu-cta" href="#contact" data-i18n="navCta">Parlons-en</a>
           </div>
         </div>
       </div>
-      <a class="btn btn-solid nav-cta" href="#contact" data-i18n="navCta">Parlons-en</a>
     </div>
   </div>
 </header>
@@ -849,7 +904,7 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
     cEyebrow: 'Available now',
     cTitle: "Let's talk about your next event. <em>Permanent, fixed-term or freelance.</em>",
     copy: 'Copy', footVideo: 'Video and drone:',
-    lbClose: 'Close', lbPrev: 'Previous photo', lbNext: 'Next photo',
+    rotate: 'Rotate the plan', lbClose: 'Close', lbPrev: 'Previous photo', lbNext: 'Next photo',
     lbViews: 'Views', lbLikes: 'Likes', lbComments: 'Comments', lbShares: 'Shares', lbIg: 'See the post on Instagram ↗'
   };
   var MSG = {
@@ -863,6 +918,7 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
   document.querySelectorAll('[data-i18n-alt]').forEach(function (el) { FR[el.getAttribute('data-i18n-alt')] = el.getAttribute('alt'); });
   document.querySelectorAll('[data-i18n-aria]').forEach(function (el) { FR[el.getAttribute('data-i18n-aria')] = el.getAttribute('aria-label'); });
   FR.brandAria = 'Carl Bourguignon, retour en haut';
+  FR.rotate = 'Faire tourner le plan';
 
   var lang = 'fr';
   function save(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
@@ -916,7 +972,7 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
   btn.addEventListener('click', function (e) { e.stopPropagation(); openMenu(!isOpen()); });
   document.addEventListener('click', function (e) { if (isOpen() && !panel.contains(e.target)) openMenu(false); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && isOpen()) { openMenu(false); btn.focus(); } });
-  panel.querySelectorAll('.toc a').forEach(function (a) { a.addEventListener('click', function () { openMenu(false); }); });
+  panel.querySelectorAll('.toc a, .menu-cta').forEach(function (a) { a.addEventListener('click', function () { openMenu(false); }); });
 
   /* ---------- Highlight the section in view ---------- */
   var ids = ['top', 'jakarta', 'strange-broadcast', 'conception', 'paris', 'parcours', 'contact'];
@@ -928,6 +984,71 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
     links.forEach(function (a) { a.classList.toggle('active', a.getAttribute('href') === '#' + current); });
   }
   window.addEventListener('scroll', markActive, { passive: true });
+
+
+  /* ---------- Fake 3D plans in the build section ---------- */
+  var MAX = 42;
+  document.querySelectorAll('.build li > .shot').forEach(function (shot, i) {
+    var stage = document.createElement('div'); stage.className = 'stage3d';
+    var plane = document.createElement('div'); plane.className = 'plane';
+    shot.parentNode.insertBefore(stage, shot);
+    plane.appendChild(shot);
+    plane.insertAdjacentHTML('beforeend', '<span class="edge edge-l" aria-hidden="true"></span><span class="edge edge-r" aria-hidden="true"></span>');
+    stage.appendChild(plane);
+    shot.insertAdjacentHTML('beforeend', '<span class="badge3d" aria-hidden="true">3D</span>');
+    var arc = document.createElement('div');
+    arc.className = 'arc'; arc.tabIndex = 0;
+    arc.setAttribute('role', 'slider');
+    arc.setAttribute('aria-valuemin', String(-MAX)); arc.setAttribute('aria-valuemax', String(MAX));
+    arc.setAttribute('data-i18n-aria', 'rotate'); arc.setAttribute('aria-label', lang === 'en' ? EN.rotate : FR.rotate);
+    arc.innerHTML = '<svg viewBox="0 0 200 64" aria-hidden="true"><path class="track" d="M10 8 A90 48 0 0 0 190 8"/><path class="fill" d=""/>' +
+      '<text class="end" x="0" y="4" text-anchor="middle">↺</text><text class="end" x="200" y="4" text-anchor="middle">↻</text></svg>' +
+      '<span class="knob" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+    stage.appendChild(arc);
+    var knob = arc.querySelector('.knob'), fill = arc.querySelector('.fill');
+    function pt(tt) { return { x: 100 + 90 * tt, y: 8 + 48 * Math.sqrt(Math.max(0, 1 - tt * tt)) }; }
+    function set(deg) {
+      deg = Math.max(-MAX, Math.min(MAX, deg));
+      var tt = deg / MAX, p = pt(tt), c = pt(0);
+      stage.style.setProperty('--ry', deg + 'deg');
+      stage.style.setProperty('--tilt', String(Math.abs(tt)));
+      stage.style.setProperty('--shift', (-deg * 0.6) + 'px');
+      knob.style.left = (p.x / 2) + '%';
+      knob.style.top = (p.y / 64 * 100) + '%';
+      var sweep = tt >= 0 ? 0 : 1;
+      fill.setAttribute('d', Math.abs(tt) < 0.01 ? '' : 'M' + c.x + ' ' + c.y + ' A90 48 0 0 ' + sweep + ' ' + p.x.toFixed(1) + ' ' + p.y.toFixed(1));
+      arc.setAttribute('aria-valuenow', String(Math.round(deg)));
+      arc.setAttribute('aria-valuetext', Math.round(deg) + '°');
+      stage._deg = deg;
+    }
+    function fromEvent(e) {
+      var b = arc.getBoundingClientRect();
+      var tt = ((e.clientX - b.left) / b.width) * 2 - 1;
+      set(tt * MAX);
+    }
+    arc.addEventListener('pointerdown', function (e) {
+      arc.setPointerCapture(e.pointerId); stage.classList.add('dragging'); stage.classList.remove('hint'); fromEvent(e); e.preventDefault();
+    });
+    arc.addEventListener('pointermove', function (e) { if (stage.classList.contains('dragging')) fromEvent(e); });
+    function end() { stage.classList.remove('dragging'); }
+    arc.addEventListener('pointerup', end); arc.addEventListener('pointercancel', end);
+    arc.addEventListener('keydown', function (e) {
+      var d = stage._deg;
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') d -= 6;
+      else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') d += 6;
+      else if (e.key === 'Home') d = -MAX;
+      else if (e.key === 'End') d = MAX;
+      else return;
+      e.preventDefault(); set(d);
+    });
+    set(i % 2 ? 16 : -16);
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (en) {
+        en.forEach(function (x) { if (x.isIntersecting) { stage.classList.add('hint'); io.disconnect(); } });
+      }, { threshold: 0.6 });
+      io.observe(stage);
+    }
+  });
 
   /* ---------- Photo viewer ---------- */
   var lb = document.getElementById('lb'), lbImg = document.getElementById('lb-img'), lbCap = document.getElementById('lb-cap');
