@@ -1,33 +1,65 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="dark">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Carl Bourguignon, chef de projet événementiel</title>
 <meta name="description" content="Chef de projet événementiel à Paris. Activations Volcom à Paris et à Jakarta (USS 2025) : négociation, coordination, contenu.">
+<script>
+/* Apply the saved theme and language before first paint */
+(function () {
+  var t = null, l = null;
+  try { t = localStorage.getItem('cb-theme'); l = localStorage.getItem('cb-lang'); } catch (e) {}
+  if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+  if (l === 'en') document.documentElement.setAttribute('data-pending-lang', 'en');
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap">
 <style>
-/* Layout idea: dark cinematic one-pager in the Skys of Carl look. Grey copy with key words in white,
-   a faint vertical column grid behind everything, one orange accent for markers, white pill buttons. */
+/* Layout idea: cinematic one-pager. Night = the original black look; Day = cool concrete grey.
+   Faint vertical column grid behind everything, one orange accent for markers, pill buttons. */
 :root {
   --bg: #0c0c0c;
   --surface: #151515;
   --line: rgba(255, 255, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.18);
   --text: #f4f4f2;
+  --soft: #d6d6d3;
+  --label: #a3a3a0;
   --muted: #8f8f8c;
   --accent: #ff6b2c;
+  --accent-glow: rgba(255, 107, 44, 0.18);
   --paper: #f3f2ef;
+  --paper-ink: #3d3d3b;
+  --header: rgba(12, 12, 12, 0.82);
   --font-display: "Sora", "Avenir Next", "Segoe UI", system-ui, sans-serif;
   --font-body: "Inter", "Helvetica Neue", Arial, system-ui, sans-serif;
   --wrap: 1180px;
   --radius: 22px;
   color-scheme: dark;
 }
+:root[data-theme="light"] {
+  --bg: #eeeeec;
+  --surface: #ffffff;
+  --line: rgba(20, 20, 18, 0.09);
+  --border: rgba(20, 20, 18, 0.2);
+  --text: #121211;
+  --soft: #2f2f2d;
+  --label: #6a6a66;
+  --muted: #5c5c58;
+  --accent: #d9480f;
+  --accent-glow: rgba(217, 72, 15, 0.16);
+  --paper: #ffffff;
+  --paper-ink: #3d3d3b;
+  --header: rgba(238, 238, 236, 0.86);
+  color-scheme: light;
+}
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+[hidden] { display: none !important; }
+html { scroll-behavior: smooth; scroll-padding-top: 84px; }
 body {
   margin: 0;
   background: var(--bg);
@@ -37,6 +69,7 @@ body {
   font-size: 17px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  transition: background-color .25s ease, color .25s ease;
 }
 body::before {
   content: "";
@@ -47,35 +80,74 @@ body::before {
   opacity: 0.55;
   z-index: 0;
 }
-main, header, footer { position: relative; z-index: 1; }
+main, footer { position: relative; z-index: 1; }
 img { max-width: 100%; display: block; }
-a { color: var(--text); text-decoration-color: rgba(255,255,255,0.3); text-underline-offset: 3px; }
+a { color: var(--text); text-decoration-color: var(--border); text-underline-offset: 3px; }
 a:hover { color: var(--accent); }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
-strong, .hi { color: var(--text); font-weight: 400; }
+.hi { color: var(--text); font-weight: 400; }
 
 .wrap { width: min(var(--wrap), 100% - 40px); margin-inline: auto; }
 
-/* Nav */
-.nav { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 26px 0; flex-wrap: wrap; }
-.brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 600; font-size: 15px; color: var(--text); text-decoration: none; }
-.brand svg { width: 20px; height: 20px; }
-.nav-links { display: flex; gap: 28px; list-style: none; margin: 0; padding: 0; font-family: var(--font-display); font-size: 14px; }
-.nav-links a { color: #cfcfcc; text-decoration: none; padding-bottom: 6px; border-bottom: 2px solid transparent; }
-.nav-links a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+/* Sticky header */
+.site-head {
+  position: sticky; top: 0; z-index: 20;
+  background: var(--header);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 68px; }
+.brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 600; font-size: 15px; color: var(--text); text-decoration: none; white-space: nowrap; }
+.brand svg { width: 20px; height: 20px; flex: none; }
+.nav-links { display: flex; gap: 24px; list-style: none; margin: 0; padding: 0; font-family: var(--font-display); font-size: 14px; }
+.nav-links a { color: var(--soft); text-decoration: none; padding: 6px 0; border-bottom: 2px solid transparent; }
+.nav-links a:hover, .nav-links a.active { color: var(--accent); border-bottom-color: var(--accent); }
+.nav-right { display: flex; align-items: center; gap: 10px; }
 
-.btn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 22px; border-radius: 999px; font-family: var(--font-display); font-weight: 600; font-size: 14px; text-decoration: none; border: 1px solid transparent; cursor: pointer; }
-.btn-solid { background: var(--text); color: #0c0c0c; }
+/* Dropdown */
+.menu { position: relative; }
+.menu-btn { gap: 10px; }
+.menu-btn svg { width: 16px; height: 16px; }
+.menu-btn .chev { transition: transform .2s ease; }
+.menu-btn[aria-expanded="true"] .chev { transform: rotate(180deg); }
+.menu-panel {
+  position: absolute; right: 0; top: calc(100% + 10px);
+  width: min(320px, calc(100vw - 32px));
+  background: var(--surface); color: var(--muted);
+  border: 1px solid var(--border); border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+  padding: 8px; display: grid; gap: 4px;
+}
+.menu-group { padding: 12px 12px 14px; display: grid; gap: 10px; }
+.menu-group + .menu-group { border-top: 1px solid var(--line); }
+.menu-title { font-family: var(--font-display); font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--label); margin: 0; }
+.toc { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.toc a { display: flex; align-items: baseline; gap: 12px; padding: 9px 10px; margin-inline: -10px; border-radius: 10px; color: var(--text); text-decoration: none; font-size: 15px; font-weight: 400; }
+.toc a:hover, .toc a.active { background: var(--accent-glow); color: var(--text); }
+.toc .n { font-family: var(--font-display); font-size: 12px; font-weight: 600; color: var(--accent); min-width: 18px; font-variant-numeric: tabular-nums; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border: 1px solid var(--border); border-radius: 999px; }
+.seg button {
+  min-height: 38px; border: 0; border-radius: 999px; background: transparent; color: var(--soft);
+  font-family: var(--font-display); font-size: 13px; font-weight: 600; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}
+.seg button svg { width: 15px; height: 15px; }
+.seg button[aria-pressed="true"] { background: var(--text); color: var(--bg); }
+.seg button:not([aria-pressed="true"]):hover { color: var(--accent); }
+
+.btn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 20px; border-radius: 999px; font-family: var(--font-display); font-weight: 600; font-size: 14px; text-decoration: none; border: 1px solid transparent; cursor: pointer; background: none; }
+.btn-solid { background: var(--text); color: var(--bg); }
 .btn-solid:hover { background: var(--accent); color: #0c0c0c; }
-.btn-ghost { border-color: rgba(255,255,255,0.22); color: var(--text); background: transparent; }
+.btn-ghost { border-color: var(--border); color: var(--text); }
 .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
 
 /* Hero */
 .hero { padding: 56px 0 40px; display: grid; gap: 40px; }
-.eyebrow { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-display); font-size: 12px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: #bdbdba; }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px rgba(255,107,44,0.18); }
+.eyebrow { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-display); font-size: 12px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--label); margin: 0; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-glow); flex: none; }
 h1, h2, h3 { font-family: var(--font-display); color: var(--text); text-wrap: balance; margin: 0; letter-spacing: -0.02em; }
-h1 { font-size: clamp(40px, 6.2vw, 78px); line-height: 1.02; font-weight: 600; max-width: 13ch; }
+h1 { font-size: clamp(40px, 6.2vw, 78px); line-height: 1.02; font-weight: 600; max-width: 13ch; margin-top: 22px; }
 h1 em { font-style: normal; color: var(--muted); }
 h2 { font-size: clamp(30px, 4vw, 48px); line-height: 1.08; font-weight: 600; }
 h3 { font-size: 20px; line-height: 1.25; font-weight: 600; letter-spacing: -0.01em; }
@@ -83,19 +155,19 @@ h3 { font-size: 20px; line-height: 1.25; font-weight: 600; letter-spacing: -0.01
 .hero-top { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 40px; align-items: end; }
 .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
 
-.frame { position: relative; overflow: hidden; border-radius: var(--radius); background: var(--surface); }
+.frame { position: relative; overflow: hidden; border-radius: var(--radius); background: var(--surface); margin: 0; }
 .frame img { width: 100%; height: 100%; object-fit: cover; }
 .hero-img { aspect-ratio: 16 / 7.2; }
 .hero-img img { object-position: 50% 62%; animation: drift 18s ease-in-out infinite alternate; }
 @keyframes drift { from { transform: scale(1.02); } to { transform: scale(1.09) translateY(-1.5%); } }
-.tag { position: absolute; left: 16px; bottom: 16px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: rgba(12,12,12,0.72); backdrop-filter: blur(8px); color: var(--text); font-family: var(--font-display); font-size: 12px; font-weight: 500; }
+.tag { position: absolute; left: 16px; bottom: 16px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: rgba(12,12,12,0.72); backdrop-filter: blur(8px); color: #f4f4f2; font-family: var(--font-display); font-size: 12px; font-weight: 500; }
 .tag .rec { width: 7px; height: 7px; border-radius: 50%; background: #ff3b30; }
 
 /* Stats */
 .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 24px 0 0; padding: 0; list-style: none; }
 .stats li { padding: 26px 22px 30px 0; display: flex; flex-direction: column; gap: 10px; }
 .stats li + li { padding-left: 22px; border-left: 1px solid var(--line); }
-.stat-label { font-family: var(--font-display); font-size: 11.5px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: #a3a3a0; }
+.stat-label { font-family: var(--font-display); font-size: 11.5px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--label); }
 .stat-num { font-family: var(--font-display); font-size: clamp(38px, 4.6vw, 58px); font-weight: 600; color: var(--text); line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
 
 /* Sections */
@@ -104,10 +176,10 @@ section.block { padding: 96px 0 24px; }
 .block-head .eyebrow { margin-bottom: 18px; }
 .prose p { margin: 0 0 18px; font-size: 19px; line-height: 1.6; max-width: 62ch; text-wrap: pretty; }
 
-.facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 0 0 40px; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0 0 40px; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
 .facts div { padding: 18px 20px; border-left: 1px solid var(--line); }
 .facts div:first-child { border-left: 0; }
-.facts dt { font-family: var(--font-display); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #a3a3a0; margin-bottom: 6px; }
+.facts dt { font-family: var(--font-display); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--label); margin-bottom: 6px; }
 .facts dd { margin: 0; color: var(--text); font-size: 15px; font-weight: 400; line-height: 1.4; }
 
 .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 0; padding: 0; list-style: none; }
@@ -115,17 +187,18 @@ section.block { padding: 96px 0 24px; }
 .step-num { font-family: var(--font-display); font-size: 13px; font-weight: 600; color: var(--accent); }
 .step p { margin: 0; font-size: 16px; line-height: 1.55; }
 
-.split { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 16px; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 26px 24px; }
 .panel h3 { margin-bottom: 18px; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.chips li { padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.14); color: #dcdcd9; font-size: 14px; font-weight: 400; }
+.chips li { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--border); color: var(--soft); font-size: 14px; font-weight: 400; }
 
-.blueprint { background: var(--paper); border-radius: var(--radius); padding: 20px; display: grid; grid-template-columns: minmax(0, 1.59fr) minmax(0, 2.65fr); gap: 16px; margin: 0; align-items: center; }
-.blueprint img { border-radius: 10px; mix-blend-mode: multiply; width: 100%; height: auto; }
-.blueprint figcaption { grid-column: 1 / -1; color: #3d3d3b; font-size: 13.5px; font-weight: 400; }
+/* Programme + posters */
+.programme { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 16px; margin-top: 16px; align-items: start; }
+.posters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 0; }
+.posters .frame { aspect-ratio: 4 / 5; border: 1px solid var(--line); }
+.posters figcaption { grid-column: 1 / -1; font-size: 13.5px; }
 
-.timeline { list-style: none; margin: 16px 0 0; padding: 26px 24px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; border: 1px solid var(--line); border-radius: var(--radius); position: relative; }
+.timeline { list-style: none; margin: 16px 0 0; padding: 26px 24px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; border: 1px solid var(--line); border-radius: var(--radius); }
 .timeline li { display: flex; flex-direction: column; gap: 6px; position: relative; padding-top: 22px; }
 .timeline li::before { content: ""; position: absolute; top: 0; left: 0; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--accent); background: var(--bg); }
 .timeline li.main::before { background: var(--accent); }
@@ -137,10 +210,30 @@ section.block { padding: 96px 0 24px; }
 .links { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; align-items: center; }
 .press { font-size: 14px; }
 
+/* Conception: from survey to opening day */
+.build { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px; margin: 0; padding: 0; list-style: none; }
+.build li { display: flex; flex-direction: column; gap: 12px; margin: 0; }
+.build .shot { position: relative; overflow: hidden; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); }
+.build .shot img { width: 100%; height: 100%; object-fit: cover; }
+.build .paper { background: var(--paper); border-color: transparent; }
+.build .paper img { object-fit: contain; }
+.build .cap { display: flex; gap: 12px; align-items: baseline; }
+.build .cap .step-num { min-width: 22px; }
+.build .cap p { margin: 0; font-size: 15px; line-height: 1.5; }
+.build .cap strong { color: var(--text); font-weight: 500; font-family: var(--font-display); }
+.b-hall { grid-column: span 3; } .b-hall .shot { aspect-ratio: 16 / 9; }
+.b-3d { grid-column: span 3; } .b-3d .shot { aspect-ratio: 16 / 9; }
+.b-iso { grid-column: span 6; } .b-iso .shot { aspect-ratio: 1600 / 640; }
+.b-iso .shot img { object-position: 50% 52%; transform: scale(1.12); }
+.b-stand { grid-column: span 6; } .b-stand .shot { aspect-ratio: 1600 / 600; }
+.b-stand .shot img { object-position: 50% 78%; }
+.b-shop { grid-column: span 3; } .b-shop .shot { aspect-ratio: 3 / 4; }
+.b-live { grid-column: span 3; } .b-live .shot { aspect-ratio: 3 / 4; }
+
 /* Paris */
 .paris-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.05fr); gap: 16px; align-items: stretch; }
 .paris-grid .frame { aspect-ratio: 2 / 3; }
-.numbers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.numbers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
 .numbers div { padding: 22px 20px; display: flex; flex-direction: column; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
 .numbers div:nth-child(-n+2) { border-top: 0; }
 .numbers div:nth-child(odd) { border-left: 0; }
@@ -149,20 +242,24 @@ section.block { padding: 96px 0 24px; }
 
 /* Background + contact */
 .about { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 40px; }
+.about h2 { margin-top: 18px; }
 .contact { margin-top: 96px; padding: 64px 0 72px; border-top: 1px solid var(--line); display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 40px; align-items: start; }
-.contact h2 { font-size: clamp(34px, 5vw, 62px); }
+.contact h2 { font-size: clamp(34px, 5vw, 62px); margin-top: 18px; }
 .contact h2 em { font-style: normal; color: var(--muted); }
 .contact-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
 .contact-list li { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
-.contact-list .k { font-family: var(--font-display); font-size: 11.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #a3a3a0; min-width: 92px; }
+.contact-list .k { font-family: var(--font-display); font-size: 11.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--label); min-width: 92px; }
 .contact-list .v { color: var(--text); font-size: 17px; font-weight: 400; flex: 1; overflow-wrap: anywhere; }
 .copy { min-height: 36px; padding: 0 14px; font-size: 12.5px; }
 .status { font-size: 13px; color: var(--accent); min-height: 20px; margin-top: 12px; }
 
 footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.5px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 
+@media (max-width: 1020px) {
+  .nav-links { display: none; }
+}
 @media (max-width: 900px) {
-  .hero-top, .block-head, .about, .contact, .split { grid-template-columns: 1fr; }
+  .hero-top, .block-head, .about, .contact, .programme { grid-template-columns: 1fr; }
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stats li:nth-child(3) { border-left: 0; padding-left: 0; }
   .stats li:nth-child(n+3) { border-top: 1px solid var(--line); }
@@ -175,17 +272,20 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
   .paris-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .paris-grid .numbers { grid-column: 1 / -1; }
   .hero-img { aspect-ratio: 4 / 3; }
+  .b-hall, .b-3d { grid-column: span 6; }
+  .b-stand .shot { aspect-ratio: 16 / 9; }
+  .b-iso .shot { aspect-ratio: 16 / 9; }
 }
 @media (max-width: 560px) {
   body { font-size: 16px; }
-  .nav-links { display: none; }
+  .nav-cta { display: none; }
   .stats li, .stats li + li { padding: 20px 14px 22px 0; }
   .stats li:nth-child(even) { padding-left: 14px; }
   .facts { grid-template-columns: 1fr; }
   .facts div { border-left: 0; border-top: 1px solid var(--line); }
   .facts div:first-child { border-top: 0; }
   .timeline { grid-template-columns: 1fr; }
-  .blueprint { grid-template-columns: 1fr; }
+  .b-shop, .b-live { grid-column: span 6; }
   .contact-list .v { font-size: 15px; }
   .contact-list .k { min-width: 0; width: 100%; }
   .prose p { font-size: 17px; }
@@ -194,170 +294,257 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .hero-img img { animation: none; }
+  body, .menu-btn .chev { transition: none; }
 }
 </style>
 </head>
 <body>
-<header class="wrap nav">
-  <a class="brand" href="#top" aria-label="Carl Bourguignon, retour en haut">
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" fill="currentColor"/><path d="M10 8.5v7l5.5-3.5L10 8.5z" fill="#0c0c0c"/><path d="M5 6h1.6M5 10h1.6M5 14h1.6M5 18h1.6M17.4 6H19M17.4 10H19M17.4 14H19M17.4 18H19" stroke="#0c0c0c" stroke-width="1.6"/></svg>
-    Carl Bourguignon
-  </a>
-  <ul class="nav-links">
-    <li><a href="#jakarta">Jakarta</a></li>
-    <li><a href="#paris">Paris</a></li>
-    <li><a href="#parcours">Parcours</a></li>
-  </ul>
-  <a class="btn btn-solid" href="#contact">Parlons-en</a>
+<header class="site-head">
+  <div class="wrap nav">
+    <a class="brand" href="#top" aria-label="Carl Bourguignon" data-i18n-aria="brandAria">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" fill="currentColor"/><path d="M10 8.5v7l5.5-3.5L10 8.5z" fill="var(--bg)"/><path d="M5 6h1.6M5 10h1.6M5 14h1.6M5 18h1.6M17.4 6H19M17.4 10H19M17.4 14H19M17.4 18H19" stroke="var(--bg)" stroke-width="1.6"/></svg>
+      Carl Bourguignon
+    </a>
+    <ul class="nav-links" aria-label="Sections">
+      <li><a href="#jakarta" data-i18n="navJakarta">Jakarta</a></li>
+      <li><a href="#conception" data-i18n="navBuild">Conception</a></li>
+      <li><a href="#paris" data-i18n="navParis">Paris</a></li>
+      <li><a href="#parcours" data-i18n="navAbout">Parcours</a></li>
+    </ul>
+    <div class="nav-right">
+      <div class="menu">
+        <button class="btn btn-ghost menu-btn" type="button" id="menu-btn" aria-expanded="false" aria-controls="menu-panel">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span data-i18n="menu">Menu</span>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="menu-panel" id="menu-panel" hidden>
+          <nav class="menu-group" aria-labelledby="toc-title">
+            <p class="menu-title" id="toc-title" data-i18n="tocTitle">Sur cette page</p>
+            <ol class="toc">
+              <li><a href="#top"><span class="n">01</span><span data-i18n="tocTop">Accueil et chiffres clés</span></a></li>
+              <li><a href="#jakarta"><span class="n">02</span><span data-i18n="tocJakarta">Volcom à USS Jakarta</span></a></li>
+              <li><a href="#conception"><span class="n">03</span><span data-i18n="tocBuild">Du plan au jour J</span></a></li>
+              <li><a href="#paris"><span class="n">04</span><span data-i18n="tocParis">TVS × Volcom à Paris</span></a></li>
+              <li><a href="#parcours"><span class="n">05</span><span data-i18n="tocAbout">Parcours</span></a></li>
+              <li><a href="#contact"><span class="n">06</span><span data-i18n="tocContact">Contact</span></a></li>
+            </ol>
+          </nav>
+          <div class="menu-group">
+            <p class="menu-title" id="lang-title" data-i18n="langTitle">Langue</p>
+            <div class="seg" role="group" aria-labelledby="lang-title">
+              <button type="button" id="lang-fr" data-lang="fr" aria-pressed="true">Français</button>
+              <button type="button" id="lang-en" data-lang="en" aria-pressed="false">English</button>
+            </div>
+          </div>
+          <div class="menu-group">
+            <p class="menu-title" id="theme-title" data-i18n="themeTitle">Affichage</p>
+            <div class="seg" role="group" aria-labelledby="theme-title">
+              <button type="button" id="theme-light" data-theme-set="light" aria-pressed="false">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                <span data-i18n="day">Jour</span>
+              </button>
+              <button type="button" id="theme-dark" data-theme-set="dark" aria-pressed="true">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+                <span data-i18n="night">Nuit</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <a class="btn btn-solid nav-cta" href="#contact" data-i18n="navCta">Parlons-en</a>
+    </div>
+  </div>
 </header>
 
 <main id="top">
   <section class="wrap hero" aria-labelledby="hero-title">
     <div class="hero-top">
       <div>
-        <p class="eyebrow"><span class="dot" aria-hidden="true"></span>Chef de projet événementiel · Paris</p>
-        <h1 id="hero-title" style="margin-top:22px">Des événements de marque, <em>du brief au jour&nbsp;J.</em></h1>
+        <p class="eyebrow"><span class="dot" aria-hidden="true"></span><span data-i18n="heroEyebrow">Chef de projet événementiel · Paris</span></p>
+        <h1 id="hero-title" data-i18n="heroTitle">Des événements de marque, <em>du brief au jour&nbsp;J.</em></h1>
       </div>
       <div>
-        <p class="lead">Je viens du skate et du terrain. En 2025, j'ai <span class="hi">négocié et coordonné deux activations Volcom</span>, à Paris puis à Jakarta : <span class="hi">prestataires, budget, permis, équipes et contenu.</span></p>
+        <p class="lead" data-i18n="heroLead">Je viens du skate et du terrain. En 2025, j'ai <span class="hi">négocié et coordonné deux activations Volcom</span>, à Paris puis à Jakarta : <span class="hi">prestataires, budget, permis, équipes et contenu.</span></p>
         <div class="hero-actions">
-          <a class="btn btn-solid" href="#contact">Me contacter</a>
-          <a class="btn btn-ghost" href="#jakarta">Voir le projet Jakarta</a>
+          <a class="btn btn-solid" href="#contact" data-i18n="heroCta1">Me contacter</a>
+          <a class="btn btn-ghost" href="#jakarta" data-i18n="heroCta2">Voir le projet Jakarta</a>
         </div>
       </div>
     </div>
 
     <div class="frame hero-img">
-      <img src="assets/hero-paris.jpg" alt="Carl, t-shirt Volcom, au-dessus des toits de Paris" width="1600" height="1067">
-      <span class="tag"><span class="rec" aria-hidden="true"></span>TVS × Volcom · Paris · août 2025</span>
+      <img src="assets/hero-paris.jpg" alt="Carl, t-shirt Volcom, au-dessus des toits de Paris" data-i18n-alt="altHero" width="1600" height="1067">
+      <span class="tag"><span class="rec" aria-hidden="true"></span><span data-i18n="heroTag">TVS × Volcom · Paris · août 2025</span></span>
     </div>
 
-    <ul class="stats" aria-label="Chiffres clés">
-      <li><span class="stat-label">Activations Volcom en 2025</span><span class="stat-num">2</span></li>
-      <li><span class="stat-label">Budget Jakarta renégocié</span><span class="stat-num">−37&nbsp;%</span></li>
-      <li><span class="stat-label">Portée estimée, Paris</span><span class="stat-num">8&nbsp;M</span></li>
-      <li><span class="stat-label">Personnes à République</span><span class="stat-num">500+</span></li>
+    <ul class="stats" aria-label="Chiffres clés" data-i18n-aria="statsAria">
+      <li><span class="stat-label" data-i18n="stat1">Activations Volcom en 2025</span><span class="stat-num">2</span></li>
+      <li><span class="stat-label" data-i18n="stat2">Budget Jakarta renégocié</span><span class="stat-num">−37&nbsp;%</span></li>
+      <li><span class="stat-label" data-i18n="stat3">Portée estimée, Paris</span><span class="stat-num">8&nbsp;M</span></li>
+      <li><span class="stat-label" data-i18n="stat4">Personnes à République</span><span class="stat-num">500+</span></li>
     </ul>
   </section>
 
   <section class="wrap block" id="jakarta" aria-labelledby="jakarta-title">
     <div class="block-head">
       <div>
-        <p class="eyebrow"><span class="dot" aria-hidden="true"></span>Projet phare · Jakarta · novembre 2025</p>
-        <h2 id="jakarta-title">Volcom Skatepark à&nbsp;USS Jakarta</h2>
+        <p class="eyebrow"><span class="dot" aria-hidden="true"></span><span data-i18n="jkEyebrow">Projet phare · Jakarta · novembre 2025</span></p>
+        <h2 id="jakarta-title" data-i18n="jkTitle">Volcom Skate Jam à&nbsp;USS Jakarta</h2>
       </div>
       <div class="prose">
-        <p>USS est l'un des plus grands rendez-vous <span class="hi">streetwear d'Asie du Sud-Est</span> : plus de 300 marques sur trois jours au JICC de Jakarta.</p>
-        <p>Pour <span class="hi">Volcom Indonesia</span>, j'ai <span class="hi">tout négocié et coordonné moi-même</span>, de la proposition au bilan : l'activation skate signée Televisi Star, avec un skatepark construit dans le hall, un stand Volcom et des contests sur trois jours.</p>
+        <p data-i18n="jkP1">USS est l'un des plus grands rendez-vous <span class="hi">streetwear d'Asie du Sud-Est</span> : plus de 300 marques sur trois jours au JICC de Jakarta.</p>
+        <p data-i18n="jkP2">Pour <span class="hi">Volcom Indonesia</span>, j'ai <span class="hi">tout négocié et coordonné moi-même</span>, de la proposition au bilan : le Volcom Skate Jam présenté par Televisi Star, avec un skatepark construit dans le hall, un stand Volcom Workwear et des contests sur trois jours.</p>
       </div>
     </div>
 
     <dl class="facts">
-      <div><dt>Client</dt><dd>Volcom Indonesia</dd></div>
-      <div><dt>Agence</dt><dd>Televisi Star</dd></div>
-      <div><dt>Événement</dt><dd>USS 2025, JICC Jakarta, 7–9 nov.</dd></div>
-      <div><dt>Mon rôle</dt><dd>Négociation et coordination, de A à Z</dd></div>
+      <div><dt data-i18n="fClient">Client</dt><dd>Volcom Indonesia</dd></div>
+      <div><dt data-i18n="fAgency">Agence</dt><dd>Televisi Star</dd></div>
+      <div><dt data-i18n="fEvent">Événement</dt><dd data-i18n="fEventV">USS 2025, Hall A-B, JICC Senayan, 7–9 nov.</dd></div>
+      <div><dt data-i18n="fRole">Mon rôle</dt><dd data-i18n="fRoleV">Négociation et coordination, de A à Z</dd></div>
     </dl>
 
-    <ol class="steps" aria-label="Ce que j'ai fait">
+    <ol class="steps" aria-label="Ce que j'ai fait" data-i18n-aria="stepsAria">
       <li class="step">
         <span class="step-num">01</span>
-        <h3>Négocier</h3>
-        <p>J'ai présenté la proposition à Volcom Indonesia et <span class="hi">renégocié le budget de 37&nbsp;%</span> pour obtenir le feu vert. J'ai calé l'emplacement de la zone skate avec les organisateurs d'USS.</p>
+        <h3 data-i18n="s1T">Négocier</h3>
+        <p data-i18n="s1P">J'ai présenté la proposition à Volcom Indonesia et <span class="hi">renégocié le budget de 37&nbsp;%</span> pour obtenir le feu vert. J'ai calé l'emplacement de la zone skate avec les organisateurs d'USS.</p>
       </li>
       <li class="step">
         <span class="step-num">02</span>
-        <h3>Coordonner</h3>
-        <p>J'ai piloté les prestataires : <span class="hi">construction du skatepark, stand, écran LED, DJ et sono</span>. J'ai aussi obtenu le permis pour le spot de Slipi et organisé les vols et l'hébergement de l'équipe venue de Bali.</p>
+        <h3 data-i18n="s2T">Coordonner</h3>
+        <p data-i18n="s2P">J'ai piloté les prestataires : <span class="hi">construction du skatepark, stand, écran LED, DJ et sono</span>. J'ai aussi obtenu le permis pour le skatepark de Slipi et organisé les vols et l'hébergement de l'équipe venue de Bali.</p>
       </li>
       <li class="step">
         <span class="step-num">03</span>
-        <h3>Livrer et suivre</h3>
-        <p>J'ai fait tourner le programme sur place pendant les trois jours, puis j'ai bouclé <span class="hi">le suivi du budget poste par poste, prévu contre réel</span>, et le bilan pour Volcom.</p>
+        <h3 data-i18n="s3T">Livrer et suivre</h3>
+        <p data-i18n="s3P">J'ai fait tourner le programme sur place pendant les trois jours, puis j'ai bouclé <span class="hi">le suivi du budget poste par poste, prévu contre réel</span>, et le bilan pour Volcom.</p>
       </li>
     </ol>
 
-    <div class="split">
+    <div class="programme">
       <div class="panel">
-        <h3>Le programme livré</h3>
+        <h3 data-i18n="progT">Le programme livré</h3>
         <ul class="chips">
-          <li>Skatepark sur mesure de 24&nbsp;m</li>
-          <li>Stand Volcom brandé</li>
-          <li>Écran LED</li>
-          <li>2 contests best trick Volcom</li>
-          <li>Game of Skate</li>
-          <li>Longest ollie</li>
-          <li>Highest ollie</li>
-          <li>Session street sous le flyover de Slipi</li>
-          <li>Cours de skate pour enfants</li>
-          <li>Sérigraphie en live</li>
-          <li>DJ et sono sur 3 jours</li>
+          <li data-i18n="c1">Skatepark sur mesure dans le hall</li>
+          <li data-i18n="c2">Stand Volcom Workwear</li>
+          <li data-i18n="c3">Écran LED</li>
+          <li data-i18n="c4">Best trick</li>
+          <li data-i18n="c5">Game of Skate</li>
+          <li data-i18n="c6">Longest ollie</li>
+          <li data-i18n="c7">Highest ollie</li>
+          <li data-i18n="c8">Skate clinic tous âges, tous niveaux</li>
+          <li data-i18n="c9">Sérigraphie en live</li>
+          <li data-i18n="c10">Projection « Meets République »</li>
+          <li data-i18n="c11">Skate Jam au skatepark de Slipi</li>
+          <li data-i18n="c12">DJ et sono, 11 h – 22 h sur 3 jours</li>
+          <li data-i18n="c13">22,5 M IDR de prix à USS</li>
         </ul>
       </div>
-      <figure class="blueprint">
-        <img src="assets/skatepark-3d.jpg" alt="Rendu 3D du skatepark : quarter, rampe, rail et box en brique" width="870" height="548">
-        <img src="assets/skatepark-plan.jpg" alt="Plan du skatepark vu de dessus, 24 mètres de long" width="1432" height="540">
-        <figcaption>Le skatepark conçu pour la zone skate du hall, en rendu 3D et en plan (24&nbsp;m de long).</figcaption>
+      <figure class="posters">
+        <div class="frame"><img src="assets/affiche-uss.jpg" alt="Affiche Volcom Skate Jam à USS, 7–9 novembre, Hall A-B JICC Senayan, prix 22 500 000 IDR" data-i18n-alt="altPosterUss" width="959" height="1200" loading="lazy"></div>
+        <div class="frame"><img src="assets/affiche-slipi.jpg" alt="Affiche Televisi Star × Volcom Skate Jam au skatepark de Slipi, dimanche 2 novembre 2025" data-i18n-alt="altPosterSlipi" width="960" height="1200" loading="lazy"></div>
+        <figcaption data-i18n="postersCap">Les deux affiches : le Skate Jam de Slipi le 2 novembre, puis USS du 7 au 9 novembre.</figcaption>
       </figure>
     </div>
 
-    <ol class="timeline" aria-label="Déroulé du projet">
-      <li><span class="when">Octobre</span><span class="what">Proposition, négociation, prestataires et logistique</span></li>
-      <li><span class="when">Début novembre</span><span class="what">Sessions street et contest sous le flyover de Slipi</span></li>
-      <li class="main"><span class="when">7–9 novembre</span><span class="what">USS : skatepark, stand et contests pendant 3 jours</span></li>
-      <li><span class="when">Après l'événement</span><span class="what">Recap vidéo, bilan budgétaire et retour client</span></li>
+    <ol class="timeline" aria-label="Déroulé du projet" data-i18n-aria="tlAria">
+      <li><span class="when" data-i18n="t1W">Octobre</span><span class="what" data-i18n="t1">Proposition, négociation, plans, prestataires et logistique</span></li>
+      <li><span class="when" data-i18n="t2W">2 novembre</span><span class="what" data-i18n="t2">Skate Jam au skatepark de Slipi : best trick à 5 M IDR et projection</span></li>
+      <li class="main"><span class="when" data-i18n="t3W">7–9 novembre</span><span class="what" data-i18n="t3">USS : skatepark, stand et contests, 11 h – 22 h</span></li>
+      <li><span class="when" data-i18n="t4W">Après l'événement</span><span class="what" data-i18n="t4">Recap vidéo, bilan budgétaire et retour client</span></li>
     </ol>
 
     <div class="links">
-      <a class="btn btn-ghost" href="https://www.youtube.com/watch?v=BTHq038qReM" target="_blank" rel="noopener">Voir le film « Strange Broadcast » ↗</a>
-      <span class="press">Annoncé dans la presse : <a href="https://www.liputan6.com/lifestyle/read/6203638/uss-2025-tak-lagi-eksklusif-untuk-pecinta-sneaker-bakal-hadirkan-lebih-dari-300-jenama-gaya-hidup" target="_blank" rel="noopener">Liputan6</a>, <a href="https://www.cnbcindonesia.com/news/20251031151818-4-681146/urban-sneaker-society-2025-kembali-digelar-simak-tanggalnya" target="_blank" rel="noopener">CNBC Indonesia</a></span>
+      <a class="btn btn-ghost" href="https://www.youtube.com/watch?v=BTHq038qReM" target="_blank" rel="noopener" data-i18n="film">Voir le film « Strange Broadcast » ↗</a>
+      <span class="press"><span data-i18n="press">Annoncé dans la presse :</span> <a href="https://www.liputan6.com/lifestyle/read/6203638/uss-2025-tak-lagi-eksklusif-untuk-pecinta-sneaker-bakal-hadirkan-lebih-dari-300-jenama-gaya-hidup" target="_blank" rel="noopener">Liputan6</a>, <a href="https://www.cnbcindonesia.com/news/20251031151818-4-681146/urban-sneaker-society-2025-kembali-digelar-simak-tanggalnya" target="_blank" rel="noopener">CNBC Indonesia</a></span>
     </div>
+  </section>
+
+  <section class="wrap block" id="conception" aria-labelledby="build-title">
+    <div class="block-head">
+      <div>
+        <p class="eyebrow"><span class="dot" aria-hidden="true"></span><span data-i18n="bEyebrow">Jakarta · conception et fabrication</span></p>
+        <h2 id="build-title" data-i18n="bTitle">Du plan au jour&nbsp;J</h2>
+      </div>
+      <div class="prose">
+        <p data-i18n="bP">Le skatepark et le stand ont été <span class="hi">dessinés pour le hall</span>, puis fabriqués en atelier et montés sur place. Voici les étapes, du relevé du lieu à l'ouverture.</p>
+      </div>
+    </div>
+
+    <ol class="build">
+      <li class="b-hall">
+        <div class="shot"><img src="assets/hall-sketchup.jpg" alt="Modélisation SketchUp du hall du JICC, colonnes et circulations" data-i18n-alt="altHall" width="1400" height="787" loading="lazy"></div>
+        <div class="cap"><span class="step-num">01</span><p data-i18n="b1"><strong>Relevé du hall.</strong> Le lieu modélisé dans SketchUp pour caler l'emprise entre les colonnes.</p></div>
+      </li>
+      <li class="b-3d">
+        <div class="shot paper"><img src="assets/skatepark-3d-rail.jpg" alt="Rendu 3D du skatepark : rail orange, plans inclinés et mur Volcom × Televisi Star" data-i18n-alt="alt3d" width="1080" height="514" loading="lazy"></div>
+        <div class="cap"><span class="step-num">02</span><p data-i18n="b2"><strong>Modules.</strong> Rail orange, plans inclinés et funbox au logo Volcom, devant le mur Televisi Star.</p></div>
+      </li>
+      <li class="b-iso">
+        <div class="shot paper"><img src="assets/skatepark-iso.jpg" alt="Vue isométrique de la zone : quarter pipe avec plateforme, rail, funbox, stand et mur de marque" data-i18n-alt="altIso" width="1600" height="773" loading="lazy"></div>
+        <div class="cap"><span class="step-num">03</span><p data-i18n="b3"><strong>Plan d'ensemble.</strong> Une piste en longueur : entrée et stand Workwear, funbox et rail au centre, quarter pipe avec plateforme au fond.</p></div>
+      </li>
+      <li class="b-stand">
+        <div class="shot paper"><img src="assets/stand-volcom.jpg" alt="Rendu du mur de stand Volcom Workwear : panneaux produits, portant et visuels" data-i18n-alt="altStand" width="1600" height="773" loading="lazy"></div>
+        <div class="cap"><span class="step-num">04</span><p data-i18n="b4"><strong>Stand Volcom Workwear.</strong> Le mur de marque pensé pour le lancement « Coming soon » : produits, arguments techniques et visuels.</p></div>
+      </li>
+      <li class="b-shop">
+        <div class="shot"><img src="assets/atelier-fabrication.jpg" alt="La funbox au logo Volcom en cours de fabrication à l'atelier, rambardes orange en arrière-plan" data-i18n-alt="altShop" width="900" height="1200" loading="lazy"></div>
+        <div class="cap"><span class="step-num">05</span><p data-i18n="b5"><strong>Fabrication.</strong> La funbox Volcom et les rambardes orange en atelier, avant le transport au JICC.</p></div>
+      </li>
+      <li class="b-live">
+        <div class="shot"><img src="assets/uss-live.jpg" alt="Le skatepark pendant USS : MC au micro, rail orange, skateurs en haut du quarter et public le long de la piste" data-i18n-alt="altLive" width="975" height="1300" loading="lazy"></div>
+        <div class="cap"><span class="step-num">06</span><p data-i18n="b6"><strong>Jour J.</strong> Le skatepark en conditions réelles pendant USS, avec le public le long de la piste.</p></div>
+      </li>
+    </ol>
   </section>
 
   <section class="wrap block" id="paris" aria-labelledby="paris-title">
     <div class="block-head">
       <div>
-        <p class="eyebrow"><span class="dot" aria-hidden="true"></span>Campagne · Paris · 22 août 2025</p>
-        <h2 id="paris-title">TVS × Volcom à&nbsp;République</h2>
+        <p class="eyebrow"><span class="dot" aria-hidden="true"></span><span data-i18n="pEyebrow">Campagne · Paris · 22 août 2025</span></p>
+        <h2 id="paris-title" data-i18n="pTitle">TVS × Volcom à&nbsp;République</h2>
       </div>
       <div class="prose">
-        <p>Un contest <span class="hi">best trick et longest ollie</span>, avec cash prize, sur la place de la République, le spot skate emblématique de Paris. Autour, une série de contenus tournés dans la ville avec l'équipe venue de Bali.</p>
-        <p>Mon rôle : <span class="hi">coordination de l'événement et production de contenu.</span></p>
+        <p data-i18n="pP1">Un contest <span class="hi">best trick et longest ollie</span>, avec cash prize, sur la place de la République, le spot skate emblématique de Paris. Autour, une série de contenus tournés dans la ville avec l'équipe venue de Bali.</p>
+        <p data-i18n="pP2">Mon rôle : <span class="hi">coordination de l'événement et production de contenu.</span></p>
       </div>
     </div>
 
     <div class="paris-grid">
-      <div class="frame"><img src="assets/paris-stairs.jpg" alt="Un skateur saute un escalier devant la foule pendant l'événement" width="900" height="1350"></div>
-      <div class="frame"><img src="assets/paris-republique.jpg" alt="Un membre de l'équipe en t-shirt Volcom Bali devant la statue de la place de la République" width="900" height="1350"></div>
-      <div class="numbers" aria-label="Résultats de la campagne Paris">
-        <div><span class="stat-num">500+</span><small>personnes, dont 200 en même temps</small></div>
-        <div><span class="stat-num">8&nbsp;M</span><small>de portée estimée, dont 5,3&nbsp;M de vues sur les reels</small></div>
-        <div><span class="stat-num">118</span><small>stories publiées</small></div>
-        <div><span class="stat-num">300+</span><small>photos produites</small></div>
+      <div class="frame"><img src="assets/paris-stairs.jpg" alt="Un skateur saute un escalier devant la foule pendant l'événement" data-i18n-alt="altStairs" width="900" height="1350" loading="lazy"></div>
+      <div class="frame"><img src="assets/paris-republique.jpg" alt="Un membre de l'équipe en t-shirt Volcom Bali devant la statue de la place de la République" data-i18n-alt="altRepublique" width="900" height="1350" loading="lazy"></div>
+      <div class="numbers" aria-label="Résultats de la campagne Paris" data-i18n-aria="numbersAria">
+        <div><span class="stat-num">500+</span><small data-i18n="n1">personnes, dont 200 en même temps</small></div>
+        <div><span class="stat-num">8&nbsp;M</span><small data-i18n="n2">de portée estimée, dont 5,3&nbsp;M de vues sur les reels</small></div>
+        <div><span class="stat-num">118</span><small data-i18n="n3">stories publiées</small></div>
+        <div><span class="stat-num">300+</span><small data-i18n="n4">photos produites</small></div>
       </div>
     </div>
   </section>
 
   <section class="wrap block about" id="parcours" aria-labelledby="parcours-title">
     <div>
-      <p class="eyebrow"><span class="dot" aria-hidden="true"></span>Parcours</p>
-      <h2 id="parcours-title" style="margin-top:18px">Avant&nbsp;ça</h2>
+      <p class="eyebrow"><span class="dot" aria-hidden="true"></span><span data-i18n="aEyebrow">Parcours</span></p>
+      <h2 id="parcours-title" data-i18n="aTitle">Avant&nbsp;ça</h2>
     </div>
     <div class="prose">
-      <p>Six mois sur les salons <span class="hi">Who's Next et Première Classe</span> chez WSN Développement. Environ <span class="hi">cinq ans aux côtés de Red Bull</span> sur des événements skate en Europe. Un <span class="hi">Master 2 International Digital Marketing</span> à l'ESCE Paris, avec un semestre à Osaka.</p>
-      <p>Je filme aussi : vidéo et drone, sous le nom <a href="https://skysofcarl.framer.website/" target="_blank" rel="noopener">Skys of Carl</a>. Je travaille en <span class="hi">français, anglais et espagnol.</span></p>
+      <p data-i18n="aP1">Six mois sur les salons <span class="hi">Who's Next et Première Classe</span> chez WSN Développement. Environ <span class="hi">cinq ans aux côtés de Red Bull</span> sur des événements skate en Europe. Un <span class="hi">Master 2 International Digital Marketing</span> à l'ESCE Paris, avec un semestre à Osaka.</p>
+      <p data-i18n="aP2">Je filme aussi : vidéo et drone, sous le nom <a href="https://skysofcarl.framer.website/" target="_blank" rel="noopener">Skys of Carl</a>. Je travaille en <span class="hi">français, anglais et espagnol.</span></p>
     </div>
   </section>
 
   <section class="wrap contact" id="contact" aria-labelledby="contact-title">
     <div>
-      <p class="eyebrow"><span class="dot" aria-hidden="true"></span>Disponible maintenant</p>
-      <h2 id="contact-title" style="margin-top:18px">Parlons de votre prochain événement. <em>CDI, CDD ou mission.</em></h2>
+      <p class="eyebrow"><span class="dot" aria-hidden="true"></span><span data-i18n="cEyebrow">Disponible maintenant</span></p>
+      <h2 id="contact-title" data-i18n="cTitle">Parlons de votre prochain événement. <em>CDI, CDD ou mission.</em></h2>
     </div>
     <div>
       <ul class="contact-list">
-        <li><span class="k">Email</span><span class="v" id="email">carlbourguignon@icloud.com</span><button class="btn btn-ghost copy" type="button" data-copy="carlbourguignon@icloud.com" id="copy-email">Copier</button></li>
-        <li><span class="k">WhatsApp</span><span class="v"><a href="https://wa.me/33769716888" target="_blank" rel="noopener">+33 7 69 71 68 88</a></span><button class="btn btn-ghost copy" type="button" data-copy="+33769716888" id="copy-phone">Copier</button></li>
+        <li><span class="k">Email</span><span class="v" id="email">carlbourguignon@icloud.com</span><button class="btn btn-ghost copy" type="button" data-copy="carlbourguignon@icloud.com" id="copy-email" data-i18n="copy">Copier</button></li>
+        <li><span class="k">WhatsApp</span><span class="v"><a href="https://wa.me/33769716888" target="_blank" rel="noopener">+33 7 69 71 68 88</a></span><button class="btn btn-ghost copy" type="button" data-copy="+33769716888" id="copy-phone" data-i18n="copy">Copier</button></li>
         <li><span class="k">Instagram</span><span class="v"><a href="https://www.instagram.com/skysofcarl/" target="_blank" rel="noopener">@skysofcarl</a></span></li>
       </ul>
       <p class="status" id="copy-status" role="status" aria-live="polite"></p>
@@ -367,25 +554,172 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
 
 <footer class="wrap">
   <span>© 2026 Carl Bourguignon · Paris</span>
-  <span>Vidéo et drone : <a href="https://skysofcarl.framer.website/" target="_blank" rel="noopener">Skys of Carl</a></span>
+  <span><span data-i18n="footVideo">Vidéo et drone :</span> <a href="https://skysofcarl.framer.website/" target="_blank" rel="noopener">Skys of Carl</a></span>
 </footer>
 
 <script>
-document.querySelectorAll('[data-copy]').forEach(function (btn) {
-  btn.addEventListener('click', function () {
-    var status = document.getElementById('copy-status');
-    var value = btn.getAttribute('data-copy');
-    try {
-      navigator.clipboard.writeText(value).then(function () {
-        status.textContent = 'Copié : ' + value;
-      }, function () {
-        status.textContent = 'Copie impossible ici. Sélectionne le texte : ' + value;
-      });
-    } catch (e) {
-      status.textContent = 'Copie impossible ici. Sélectionne le texte : ' + value;
-    }
+(function () {
+  var root = document.documentElement;
+
+  /* ---------- English strings (French is read from the page itself) ---------- */
+  var EN = {
+    brandAria: 'Carl Bourguignon, back to top',
+    navJakarta: 'Jakarta', navBuild: 'Build', navParis: 'Paris', navAbout: 'Background', navCta: "Let's talk",
+    menu: 'Menu', tocTitle: 'On this page',
+    tocTop: 'Intro and key figures', tocJakarta: 'Volcom at USS Jakarta', tocBuild: 'From plan to opening day',
+    tocParis: 'TVS × Volcom in Paris', tocAbout: 'Background', tocContact: 'Contact',
+    langTitle: 'Language', themeTitle: 'Display', day: 'Day', night: 'Night',
+    heroEyebrow: 'Event project manager · Paris',
+    heroTitle: 'Brand events, <em>from brief to opening&nbsp;day.</em>',
+    heroLead: 'I come from skateboarding and fieldwork. In 2025 I <span class="hi">negotiated and coordinated two Volcom activations</span>, in Paris and then in Jakarta: <span class="hi">suppliers, budget, permits, crews and content.</span>',
+    heroCta1: 'Get in touch', heroCta2: 'See the Jakarta project',
+    altHero: 'Carl in a Volcom t-shirt above the rooftops of Paris',
+    heroTag: 'TVS × Volcom · Paris · August 2025',
+    statsAria: 'Key figures',
+    stat1: 'Volcom activations in 2025', stat2: 'Jakarta budget renegotiated', stat3: 'Estimated reach, Paris', stat4: 'People at République',
+    jkEyebrow: 'Lead project · Jakarta · November 2025',
+    jkTitle: 'Volcom Skate Jam at&nbsp;USS Jakarta',
+    jkP1: 'USS is one of the largest <span class="hi">streetwear events in Southeast Asia</span>: more than 300 brands over three days at JICC in Jakarta.',
+    jkP2: 'For <span class="hi">Volcom Indonesia</span>, I <span class="hi">negotiated and coordinated everything myself</span>, from proposal to wrap-up: the Volcom Skate Jam presented by Televisi Star, with a skatepark built inside the hall, a Volcom Workwear booth and contests over three days.',
+    fClient: 'Client', fAgency: 'Agency', fEvent: 'Event', fEventV: 'USS 2025, Hall A-B, JICC Senayan, Nov 7–9',
+    fRole: 'My role', fRoleV: 'Negotiation and coordination, end to end',
+    stepsAria: 'What I did',
+    s1T: 'Negotiate',
+    s1P: 'I pitched the proposal to Volcom Indonesia and <span class="hi">renegotiated the budget by 37&nbsp;%</span> to get the green light. I secured the skate area location with the USS organisers.',
+    s2T: 'Coordinate',
+    s2P: 'I managed the suppliers: <span class="hi">skatepark build, booth, LED screen, DJ and sound</span>. I also obtained the permit for the Slipi skatepark and arranged flights and accommodation for the crew from Bali.',
+    s3T: 'Deliver and report',
+    s3P: 'I ran the programme on site for all three days, then closed <span class="hi">line-by-line budget tracking, planned versus actual</span>, and the wrap-up report for Volcom.',
+    progT: 'The programme delivered',
+    c1: 'Custom skatepark inside the hall', c2: 'Volcom Workwear booth', c3: 'LED screen', c4: 'Best trick', c5: 'Game of Skate',
+    c6: 'Longest ollie', c7: 'Highest ollie', c8: 'Skate clinic for all ages and levels', c9: 'Live screen printing',
+    c10: '“Meets République” screening', c11: 'Skate Jam at Slipi skatepark', c12: 'DJ and sound, 11am – 10pm for 3 days',
+    c13: 'IDR 22.5M in prizes at USS',
+    altPosterUss: 'Volcom Skate Jam poster at USS, November 7–9, Hall A-B JICC Senayan, IDR 22,500,000 prize',
+    altPosterSlipi: 'Televisi Star × Volcom Skate Jam poster at Slipi skatepark, Sunday 2 November 2025',
+    postersCap: 'The two posters: the Slipi Skate Jam on November 2, then USS from November 7 to 9.',
+    tlAria: 'Project timeline',
+    t1W: 'October', t1: 'Proposal, negotiation, plans, suppliers and logistics',
+    t2W: 'November 2', t2: 'Skate Jam at Slipi skatepark: IDR 5M best trick and screening',
+    t3W: 'November 7–9', t3: 'USS: skatepark, booth and contests, 11am – 10pm',
+    t4W: 'After the event', t4: 'Video recap, budget report and client debrief',
+    film: 'Watch the film “Strange Broadcast” ↗', press: 'Covered in the press:',
+    bEyebrow: 'Jakarta · design and build',
+    bTitle: 'From plan to opening&nbsp;day',
+    bP: 'The skatepark and the booth were <span class="hi">designed for the hall</span>, then built in a workshop and installed on site. Here are the steps, from the venue survey to opening day.',
+    altHall: 'SketchUp model of the JICC hall, columns and walkways',
+    b1: '<strong>Venue survey.</strong> The hall modelled in SketchUp to fit the footprint between the columns.',
+    alt3d: '3D render of the skatepark: orange rail, banks and Volcom × Televisi Star wall',
+    b2: '<strong>Obstacles.</strong> Orange rail, banks and a Volcom-logo funbox, in front of the Televisi Star wall.',
+    altIso: 'Isometric view of the area: quarter pipe with deck, rail, funbox, booth and brand wall',
+    b3: '<strong>Layout.</strong> A long run: entrance and Workwear booth, funbox and rail in the middle, quarter pipe with deck at the far end.',
+    altStand: 'Render of the Volcom Workwear booth wall: product panels, rack and visuals',
+    b4: '<strong>Volcom Workwear booth.</strong> The brand wall designed for the “Coming soon” launch: products, technical features and visuals.',
+    altShop: 'The Volcom-logo funbox being built in the workshop, orange railings in the background',
+    b5: '<strong>Build.</strong> The Volcom funbox and the orange railings in the workshop, before transport to JICC.',
+    altLive: 'The skatepark during USS: MC on the mic, orange rail, skaters on top of the quarter and crowd along the run',
+    b6: '<strong>Opening day.</strong> The skatepark in action during USS, with the crowd along the run.',
+    pEyebrow: 'Campaign · Paris · 22 August 2025',
+    pTitle: 'TVS × Volcom at&nbsp;République',
+    pP1: 'A <span class="hi">best trick and longest ollie</span> contest with cash prizes on Place de la République, the most famous skate spot in Paris. Around it, a content series shot across the city with the crew from Bali.',
+    pP2: 'My role: <span class="hi">event coordination and content production.</span>',
+    altStairs: 'A skater jumps a set of stairs in front of the crowd during the event',
+    altRepublique: 'A crew member in a Volcom Bali t-shirt in front of the statue on Place de la République',
+    numbersAria: 'Paris campaign results',
+    n1: 'people, 200 at the same time', n2: 'estimated reach, including 5.3&nbsp;M reel views', n3: 'stories published', n4: 'photos produced',
+    aEyebrow: 'Background', aTitle: 'Before&nbsp;that',
+    aP1: 'Six months on the <span class="hi">Who\'s Next and Première Classe</span> trade shows at WSN Développement. About <span class="hi">five years alongside Red Bull</span> on skate events across Europe. A <span class="hi">Master\'s in International Digital Marketing</span> at ESCE Paris, with a semester in Osaka.',
+    aP2: 'I also shoot video and drone footage as <a href="https://skysofcarl.framer.website/" target="_blank" rel="noopener">Skys of Carl</a>. I work in <span class="hi">French, English and Spanish.</span>',
+    cEyebrow: 'Available now',
+    cTitle: "Let's talk about your next event. <em>Permanent, fixed-term or freelance.</em>",
+    copy: 'Copy', footVideo: 'Video and drone:'
+  };
+  var MSG = {
+    fr: { copied: 'Copié : ', fail: 'Copie impossible ici. Sélectionne le texte : ', title: 'Carl Bourguignon, chef de projet événementiel' },
+    en: { copied: 'Copied: ', fail: 'Copy is blocked here. Select the text: ', title: 'Carl Bourguignon, event project manager' }
+  };
+
+  /* Capture the French originals once */
+  var FR = {};
+  document.querySelectorAll('[data-i18n]').forEach(function (el) { FR[el.getAttribute('data-i18n')] = el.innerHTML; });
+  document.querySelectorAll('[data-i18n-alt]').forEach(function (el) { FR[el.getAttribute('data-i18n-alt')] = el.getAttribute('alt'); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(function (el) { FR[el.getAttribute('data-i18n-aria')] = el.getAttribute('aria-label'); });
+  FR.brandAria = 'Carl Bourguignon, retour en haut';
+
+  var lang = 'fr';
+  function save(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+  function setLang(l) {
+    lang = l === 'en' ? 'en' : 'fr';
+    var dict = lang === 'en' ? EN : FR;
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      var v = dict[el.getAttribute('data-i18n')]; if (v != null) el.innerHTML = v;
+    });
+    document.querySelectorAll('[data-i18n-alt]').forEach(function (el) {
+      var v = dict[el.getAttribute('data-i18n-alt')]; if (v != null) el.setAttribute('alt', v);
+    });
+    document.querySelectorAll('[data-i18n-aria]').forEach(function (el) {
+      var v = dict[el.getAttribute('data-i18n-aria')]; if (v != null) el.setAttribute('aria-label', v);
+    });
+    root.setAttribute('lang', lang);
+    document.title = MSG[lang].title;
+    document.querySelectorAll('[data-lang]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === lang)); });
+    document.getElementById('copy-status').textContent = '';
+  }
+
+  function setTheme(t) {
+    t = t === 'light' ? 'light' : 'dark';
+    root.setAttribute('data-theme', t);
+    document.querySelectorAll('[data-theme-set]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-theme-set') === t)); });
+  }
+
+  document.querySelectorAll('[data-lang]').forEach(function (b) {
+    b.addEventListener('click', function () { setLang(b.getAttribute('data-lang')); save('cb-lang', lang); });
   });
-});
+  document.querySelectorAll('[data-theme-set]').forEach(function (b) {
+    b.addEventListener('click', function () { var t = b.getAttribute('data-theme-set'); setTheme(t); save('cb-theme', t); });
+  });
+
+  setTheme(root.getAttribute('data-theme'));
+  if (root.getAttribute('data-pending-lang') === 'en') { root.removeAttribute('data-pending-lang'); setLang('en'); }
+
+  /* ---------- Dropdown ---------- */
+  var btn = document.getElementById('menu-btn');
+  var panel = document.getElementById('menu-panel');
+  function openMenu(open) {
+    panel.hidden = !open;
+    btn.setAttribute('aria-expanded', String(open));
+  }
+  btn.addEventListener('click', function (e) { e.stopPropagation(); openMenu(panel.hidden); });
+  document.addEventListener('click', function (e) { if (!panel.hidden && !panel.contains(e.target)) openMenu(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !panel.hidden) { openMenu(false); btn.focus(); } });
+  panel.querySelectorAll('.toc a').forEach(function (a) { a.addEventListener('click', function () { openMenu(false); }); });
+
+  /* ---------- Highlight the section in view ---------- */
+  var ids = ['top', 'jakarta', 'conception', 'paris', 'parcours', 'contact'];
+  var links = document.querySelectorAll('.toc a, .nav-links a');
+  function markActive() {
+    var current = 'top', y = window.scrollY + 140;
+    ids.forEach(function (id) { var s = document.getElementById(id); if (s && s.offsetTop <= y) current = id; });
+    if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 4) current = 'contact';
+    links.forEach(function (a) { a.classList.toggle('active', a.getAttribute('href') === '#' + current); });
+  }
+  window.addEventListener('scroll', markActive, { passive: true });
+  markActive();
+
+  /* ---------- Copy buttons ---------- */
+  document.querySelectorAll('[data-copy]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var status = document.getElementById('copy-status');
+      var value = b.getAttribute('data-copy');
+      var m = MSG[lang];
+      try {
+        navigator.clipboard.writeText(value).then(function () { status.textContent = m.copied + value; },
+          function () { status.textContent = m.fail + value; });
+      } catch (e) { status.textContent = m.fail + value; }
+    });
+  });
+})();
 </script>
 </body>
 </html>
