@@ -1220,7 +1220,603 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
     } }
   };
 
+  /* Volcom Skate Jam, USS Jakarta: skatepark model in real metres.
+     x = length (0 entrance -> 30 quarter end), z = width (0 wall -> 8 open side), y = up.
+     Positions come from the isometric plan; heights from Carl. */
+  (function () {
+    var P = {
+      L: 30, W: 8, wallH: 3.6,
+      tileL: 2.0, tileW: 2.0, tileOffL: 0, tileOffW: 0,
+      // E: quarter, two sections side by side, both 2.5 m
+      qStart: 26.92, qCoping: 29.27, qH: 2.5, qSplit: 4.43, railH: 1.0,
+      // A: entrance. Box on the wall side (1.2 m, rail at 1.5 m), start deck + striped bank on the public side (1.8 m)
+      aBoxW: 3.06, aBoxL: 1.6, aBoxH: 1.2, aRailX: 1.0, aRailH: 1.5,
+      aW1: 6.92, aDeckL: 0.6, aBankEnd: 2.97, aDeckH: 1.8,
+      carpet: [0, 3.3, 6.92, 9.8],
+      // C: central module (bank up, plateau 0.9 m, bank down) on the public side; D on its wall-side slope
+      cZ0: 3.44, cX0: 12.2, cX1: 14.8, cX2: 14.8, cX3: 17.4, cH: 0.9,
+      railZ: 5.75,
+      // D: bank along the wall (W 0 -> 2.1) rising towards the plateau, with the stone panel on its slope
+      dW: 2.3, dX0: 12.3
+    };
+    window.PARK = P;
+    var ORANGE = 0xff5a1f;
+
+    /* ---------- helpers ---------- */
+    function canvasTex(w, h, draw) { var c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); var t = new THREE.CanvasTexture(c); t.anisotropy = 8; return t; }
+    function stone(ctx, cx, cy, s, fg, bg) {
+      ctx.save(); ctx.translate(cx, cy);
+      ctx.fillStyle = fg; ctx.beginPath();
+      ctx.moveTo(0, -s); ctx.lineTo(s * 0.62, -s * 0.05); ctx.lineTo(0, s); ctx.lineTo(-s * 0.62, -s * 0.05); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = bg; ctx.lineWidth = s * 0.1; ctx.beginPath();
+      ctx.moveTo(0, -s * 0.8); ctx.lineTo(-s * 0.2, s * 0.15); ctx.lineTo(0, s * 0.8);
+      ctx.moveTo(-s * 0.2, s * 0.15); ctx.lineTo(s * 0.45, -s * 0.05);
+      ctx.stroke(); ctx.restore();
+    }
+    function txt(ctx, s, x, y, size, color, align) {
+      ctx.fillStyle = color; ctx.font = '900 ' + size + 'px "Arial Black", Impact, "Helvetica Neue", Arial, sans-serif';
+      ctx.textAlign = align || 'center'; ctx.textBaseline = 'middle'; ctx.fillText(s, x, y);
+    }
+    var TEX = {};
+    function tex(name) {
+      if (TEX[name]) return TEX[name];
+      var t;
+      if (name === 'stripes') { t = canvasTex(64, 256, function (c, w, h) { for (var i = 0; i < 8; i++) { c.fillStyle = i % 2 ? '#141414' : '#ff5a1f'; c.fillRect(0, i * h / 8, w, h / 8); } }); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, 0.42); }
+      if (name === 'tvs') t = canvasTex(512, 512, function (c, w, h) {
+        c.fillStyle = '#f2f2f2'; c.fillRect(0, 0, w, h);
+        for (var y = 0; y < 10; y++) for (var x = 0; x < 5; x++) txt(c, 'STAR', 52 + x * 104, 26 + y * 52, 26, '#bdbdbd');
+        c.fillStyle = '#fff'; c.fillRect(40, 190, 432, 140); c.strokeStyle = '#111'; c.lineWidth = 6; c.strokeRect(40, 190, 432, 140);
+        txt(c, 'TELEVISI', 256, 228, 52, '#111'); txt(c, 'STAR', 256, 292, 72, '#111');
+      });
+      if (name === 'circle') t = canvasTex(512, 512, function (c, w, h) {
+        c.fillStyle = '#fafafa'; c.fillRect(0, 0, w, h);
+        c.strokeStyle = '#111'; c.lineWidth = 26; c.beginPath(); c.arc(256, 256, 190, 0, Math.PI * 2); c.stroke();
+        stone(c, 256, 256, 150, '#111', '#fafafa');
+      });
+      if (name === 'stoneTop') t = canvasTex(256, 256, function (c, w, h) { c.fillStyle = '#151515'; c.fillRect(0, 0, w, h); stone(c, 128, 128, 105, '#f2f2f2', '#151515'); });
+      if (name === 'stoneSide') t = canvasTex(256, 256, function (c, w, h) { c.clearRect(0, 0, w, h); stone(c, 128, 128, 110, '#ff5a1f', '#141414'); c.strokeStyle = '#ff5a1f'; c.lineWidth = 6; c.beginPath(); c.moveTo(128, 10); c.lineTo(200, 124); c.lineTo(128, 246); c.lineTo(56, 124); c.closePath(); c.stroke(); });
+      if (name === 'dStone') t = canvasTex(512, 384, function (c, w, h) {
+        c.fillStyle = '#141414'; c.fillRect(0, 0, w, h);
+        c.fillStyle = '#f2f2f0';
+        [[[30, 192], [300, 40], [330, 182]], [[30, 192], [300, 344], [330, 202]], [[350, 182], [490, 60], [445, 182]], [[350, 202], [490, 324], [445, 202]]].forEach(function (tr) {
+          c.beginPath(); c.moveTo(tr[0][0], tr[0][1]); c.lineTo(tr[1][0], tr[1][1]); c.lineTo(tr[2][0], tr[2][1]); c.closePath(); c.fill();
+        });
+      });
+      if (name === 'workwear') t = canvasTex(512, 320, function (c, w, h) {
+        c.fillStyle = '#121212'; c.fillRect(0, 0, w, h); c.strokeStyle = '#ff5a1f'; c.lineWidth = 8; c.strokeRect(14, 14, w - 28, h - 28);
+        stone(c, 92, 160, 80, '#ff5a1f', '#121212');
+        txt(c, 'VOLCOM', 320, 96, 64, '#ff5a1f'); txt(c, 'Workwear', 320, 168, 54, '#ff5a1f');
+        txt(c, 'DURABLE GOODS', 320, 240, 30, '#ff5a1f');
+      });
+      if (name === 'soon') t = canvasTex(512, 256, function (c, w, h) { c.fillStyle = '#ffffff'; c.fillRect(0, 0, w, h); txt(c, 'COMING', 256, 86, 84, '#ff5a1f'); txt(c, 'SOON', 256, 182, 84, '#ff5a1f'); });
+      ['DURABILITY', 'SUPERIOR STRETCH', 'BUCKLE BUTTON'].forEach(function (label, i) {
+        if (name === 'tech' + i) t = canvasTex(320, 256, function (c, w, h) {
+          c.fillStyle = '#141414'; c.fillRect(0, 0, w, h); c.strokeStyle = '#ff5a1f'; c.lineWidth = 6; c.strokeRect(10, 10, w - 20, h - 20);
+          c.strokeStyle = '#ff5a1f'; c.lineWidth = 5; c.strokeRect(w / 2 - 28, 46, 56, 56);
+          var parts = label.split(' ');
+          parts.forEach(function (p, k) { txt(c, p, w / 2, 150 + k * 40, parts.length > 1 ? 34 : 38, '#ffffff'); });
+        });
+      });
+      if (name === 'poster') t = canvasTex(256, 320, function (c, w, h) {
+        var g = c.createLinearGradient(0, 0, w, h); g.addColorStop(0, '#2e2a26'); g.addColorStop(1, '#7a4a2a');
+        c.fillStyle = g; c.fillRect(0, 0, w, h); c.fillStyle = 'rgba(255,90,31,0.85)'; c.fillRect(20, 24, w - 40, 60);
+        txt(c, 'VOLCOM', w / 2, 54, 34, '#111'); c.fillStyle = 'rgba(255,255,255,0.18)'; c.fillRect(30, 110, w - 60, 170);
+      });
+      if (name === 'rack') t = canvasTex(256, 512, function (c, w, h) {
+        c.fillStyle = '#ff5a1f'; c.fillRect(0, 0, w, h);
+        [['#1c1c1c', 30, 60], ['#a99a7a', 130, 150], ['#1c1c1c', 40, 250], ['#8a8f6a', 140, 330], ['#a99a7a', 30, 380], ['#1c1c1c', 130, 420]].forEach(function (k) { c.fillStyle = k[0]; c.fillRect(k[1], k[2], 80, 110); });
+        c.fillStyle = '#f2f2f2'; c.fillRect(150, 20, 34, 120); c.fillRect(196, 20, 34, 120);
+      });
+      if (name === 'darkPoster') t = canvasTex(256, 384, function (c, w, h) {
+        var g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#1d1b2a'); g.addColorStop(1, '#5a3a2a'); c.fillStyle = g; c.fillRect(0, 0, w, h);
+        txt(c, 'VOLCOM', w / 2, 60, 40, '#ff8a3d'); c.strokeStyle = '#ddd'; c.lineWidth = 6; c.beginPath(); c.moveTo(140, 90); c.lineTo(120, 170); c.lineTo(150, 230); c.stroke();
+      });
+      TEX[name] = t; return t;
+    }
+    function M(color, map) { var m = new THREE.MeshLambertMaterial({ color: map ? 0xffffff : color, side: THREE.DoubleSide }); if (map) { m.map = map; m.transparent = true; m.alphaTest = 0.05; } return m; }
+    var EDGE = null;
+    function add(g, geo, mats, x, y, z, noEdge) {
+      var m = new THREE.Mesh(geo, mats); m.position.set(x || 0, y || 0, z || 0);
+      m.castShadow = m.receiveShadow = true;
+      if (!noEdge) { if (!EDGE) EDGE = new THREE.LineBasicMaterial({ color: 0x111111, transparent: true, opacity: 0.6 }); m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo, 25), EDGE)); }
+      g.add(m); return m;
+    }
+    function box(g, x0, y0, z0, x1, y1, z1, mat, noEdge) {
+      return add(g, new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0), mat, (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2, noEdge);
+    }
+    // profile in the x-y plane, extruded along z from z0 to z1; materials: [caps (side faces), surfaces]
+    function prism(g, pts, z0, z1, capMat, sideMat) {
+      var s = new THREE.Shape(); s.moveTo(pts[0][0], pts[0][1]);
+      for (var i = 1; i < pts.length; i++) s.lineTo(pts[i][0], pts[i][1]);
+      var geo = new THREE.ExtrudeGeometry(s, { depth: z1 - z0, bevelEnabled: false, curveSegments: 24 });
+      return add(g, geo, [capMat, sideMat], 0, 0, z0);
+    }
+    // a textured plane standing on the wall face (z = 0), from x0 to x1, y0 to y1
+    function wallPanel(g, x0, x1, y0, y1, map, depth) {
+      var d = depth || 0.04;
+      var m = box(g, x0, y0, 0, x1, y1, d, [M(0x222222), M(0x222222), M(0x222222), M(0x222222), M(0, map), M(0x222222)]);
+      return m;
+    }
+    function cyl(g, a, b, r, mat) {
+      var va = new THREE.Vector3(a[0], a[1], a[2]), vb = new THREE.Vector3(b[0], b[1], b[2]);
+      var m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, va.distanceTo(vb), 10), mat);
+      m.position.copy(va).add(vb).multiplyScalar(0.5);
+      m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), vb.clone().sub(va).normalize());
+      m.castShadow = true; g.add(m); return m;
+    }
+    function tube(g, pts, r, mat) {
+      var curve = new THREE.CatmullRomCurve3(pts.map(function (p) { return new THREE.Vector3(p[0], p[1], p[2]); }), false, 'centripetal');
+      var m = new THREE.Mesh(new THREE.TubeGeometry(curve, 160, r, 12, false), mat); m.castShadow = true; g.add(m); return m;
+    }
+    function railing(g, z0, z1, x, y, n, mat) {
+      for (var i = 0; i < n; i++) { var z = z0 + (z1 - z0) * i / (n - 1); cyl(g, [x, y, z], [x, y + P.railH, z], 0.025, mat); }
+      cyl(g, [x, y + P.railH, z0], [x, y + P.railH, z1], 0.025, mat);
+      cyl(g, [x, y + P.railH * 0.55, z0], [x, y + P.railH * 0.55, z1], 0.025, mat);
+    }
+
+
+    /* ---------- Murals: projected from the original drawings ----------
+       L 0 -> 14.74 (Workwear to Televisi Star): stand render. L 14.74 -> 17.6 (circle): rail render.
+       L 17.6 -> 30: isometric plan. Areas hidden by a module in the drawing stay plain wall. */
+    function homography(src, dst) {
+      var A = [], B = [];
+      for (var i = 0; i < 4; i++) {
+        var x = src[i][0], y = src[i][1], X = dst[i][0], Y = dst[i][1];
+        A.push([x, y, 1, 0, 0, 0, -X * x, -X * y]); B.push(X);
+        A.push([0, 0, 0, x, y, 1, -Y * x, -Y * y]); B.push(Y);
+      }
+      for (var c = 0; c < 8; c++) {
+        var pv = c; for (var r = c + 1; r < 8; r++) if (Math.abs(A[r][c]) > Math.abs(A[pv][c])) pv = r;
+        var tA = A[c]; A[c] = A[pv]; A[pv] = tA; var tB = B[c]; B[c] = B[pv]; B[pv] = tB;
+        for (var r2 = 0; r2 < 8; r2++) { if (r2 === c) continue; var f = A[r2][c] / A[c][c]; for (var k = c; k < 8; k++) A[r2][k] -= f * A[c][k]; B[r2] -= f * B[c]; }
+      }
+      var h = []; for (var j = 0; j < 8; j++) h.push(B[j] / A[j][j]);
+      return function (x, y) { var d = h[6] * x + h[7] * y + 1; return [(h[0] * x + h[1] * y + h[2]) / d, (h[3] * x + h[4] * y + h[5]) / d]; };
+    }
+    function imgData(src, cb) {
+      var im = new Image();
+      im.onload = function () { var c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; var x = c.getContext('2d'); x.drawImage(im, 0, 0); cb(x.getImageData(0, 0, c.width, c.height)); };
+      im.src = src;
+    }
+    var MURAL = null, MURAL_WAIT = [], MURAL_DONE = false;
+    function getMural(onUpdate) {
+      if (onUpdate && !MURAL_DONE) MURAL_WAIT.push(onUpdate);
+      if (MURAL) return MURAL;
+      var PX = 100, CW = Math.round(P.L * PX), CH = Math.round(P.wallH * PX);
+      var cv = document.createElement('canvas'); cv.width = CW; cv.height = CH;
+      var cx = cv.getContext('2d'); cx.fillStyle = '#f7f7f5'; cx.fillRect(0, 0, CW, CH);
+      MURAL = new THREE.CanvasTexture(cv); MURAL.anisotropy = 8;
+      var srcs = { stand: 'assets/stand-volcom.jpg', rail: 'assets/skatepark-3d-rail.jpg', iso: 'assets/skatepark-iso.jpg' }, data = {}, n = 0;
+      Object.keys(srcs).forEach(function (k) { imgData(srcs[k], function (d) { data[k] = d; if (++n === 3) paint(); }); });
+      function paint() {
+        var out = cx.getImageData(0, 0, CW, CH), o = out.data;
+        var sq = [[0, 0], [1, 0], [1, 1], [0, 1]];
+        var hStand = homography(sq, [[137.7, 199.5], [1255.7, 258.3], [1255.7, 554.2], [137.7, 609.3]]);
+        var hTvs = homography(sq, [[1255.7, 258.3], [1427, 267.3], [1427, 545.8], [1255.7, 554.2]]);
+        var hCircle = homography(sq, [[634.4, 16.4], [785, 21], [785, 245], [634.4, 240.3]]);
+        function sample(d, x, y, i) {
+          var xi = Math.round(x), yi = Math.round(y);
+          if (xi < 0 || yi < 0 || xi >= d.width || yi >= d.height) return;
+          var s = (yi * d.width + xi) * 4; o[i] = d.data[s]; o[i + 1] = d.data[s + 1]; o[i + 2] = d.data[s + 2]; o[i + 3] = 255;
+        }
+        function hiddenStand(x, y) { // striped ramp and its handrail in front of the wall on the stand render
+          if (x >= 155 && x <= 220 && y >= 370 && y <= 480) return true;
+          var lim = x < 195 ? 290 + (x - 95) * 1.9 : 480 + (x - 195) * 0.567;
+          return y > lim;
+        }
+        for (var j = 0; j < CH; j++) {
+          var yM = P.wallH - (j + 0.5) / PX, v = (j + 0.5) / CH;
+          for (var i = 0; i < CW; i++) {
+            var L = (i + 0.5) / PX, idx = (j * CW + i) * 4, p;
+            if (L < 11.53) {
+              p = hStand(L / 11.53, v);
+              if (!hiddenStand(p[0], p[1])) sample(data.stand, p[0], p[1], idx);
+            } else if (L < 14.74) {
+              p = hTvs((L - 11.53) / 3.21, v);
+              var py = p[1], lim = p[0] > 1350 ? 440 : 497;
+              while (py > lim) py -= 49;   // bottom rows hidden by the stone on the render: repeat the STAR pattern
+              sample(data.stand, p[0], py, idx);
+            } else if (L < 17.6) {
+              p = hCircle((L - 14.74) / 2.86, v);
+              sample(data.rail, p[0], p[1], idx);
+            } else {
+              var l = L / 0.984 - 0.43, w = 0.43, hD = yM / P.wallH * 3.85, k = 31.85;
+              sample(data.iso, 318.5 + k * 0.866 * (l + w), 637.3 + k * (-0.5 * l + 0.5 * w - hD), idx);
+            }
+          }
+        }
+        cx.putImageData(out, 0, 0);
+        MURAL.needsUpdate = true; MURAL_DONE = true;
+        MURAL_WAIT.forEach(function (f) { f(); }); MURAL_WAIT = [];
+      }
+      return MURAL;
+    }
+
+    /* ---------- the park ---------- */
+    function buildPark(g, white, opt) {
+      var MOD = white ? M(0xf3f2ef) : M(0x232323);      // riding surfaces
+      var SIDE = white ? M(0x1e1e1e) : M(0x181818);     // side faces
+      var OR = M(ORANGE);
+      var STR = M(0, tex('stripes'));
+
+      // floor with tile grid
+      var tiles = canvasTex(512, 512, function (c, w, h) { c.fillStyle = white ? '#f0efeb' : '#a6a6a4'; c.fillRect(0, 0, w, h); c.strokeStyle = white ? '#c6c5c0' : '#3c3c3a'; c.lineWidth = 5; c.strokeRect(0, 0, w, h); });
+      tiles.wrapS = tiles.wrapT = THREE.RepeatWrapping; tiles.repeat.set(P.L / P.tileL, P.W / P.tileW); tiles.offset.set(P.tileOffL, P.tileOffW);
+      var fg = new THREE.PlaneGeometry(P.L, P.W); fg.rotateX(-Math.PI / 2);
+      var fl = add(g, fg, M(0, tiles), P.L / 2, 0, P.W / 2, true); fl.castShadow = false;
+      box(g, 0, -0.06, 0, P.L, 0, P.W, M(white ? 0xdedcd6 : 0x8a8a88), true);
+
+      // wall (2 m) with its murals
+      box(g, 0, 0, -0.12, P.L, P.wallH, 0, M(0xf7f7f5));
+      box(g, 0, P.wallH, -0.14, P.L, P.wallH + 0.04, 0.02, M(0x9a9a98), true);
+      // murals: the original drawings, projected onto the wall (see getMural)
+      var mural = getMural(opt.onUpdate);
+      var mm = new THREE.Mesh(new THREE.PlaneGeometry(P.L, P.wallH), new THREE.MeshLambertMaterial({ map: mural }));
+      mm.position.set(P.L / 2, P.wallH / 2, 0.006); mm.receiveShadow = true; g.add(mm);
+      box(g, 11.53, P.wallH, 0, 14.74, P.wallH + 0.1, 0.12, M(0x161616));
+      box(g, 14.74, P.wallH, 0, 17.6, P.wallH + 0.1, 0.12, M(0x161616));
+
+      // A: entrance
+      box(g, 0, 0, 0, P.aBoxL, P.aBoxH, P.aBoxW, [SIDE, SIDE, MOD, SIDE, SIDE, SIDE]);
+      var dec = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 0.55), M(0, tex('stoneTop'))); dec.rotation.x = -Math.PI / 2; dec.position.set(P.aBoxL * 0.55, P.aBoxH + 0.005, P.aBoxW * 0.55); g.add(dec);
+      cyl(g, [P.aRailX, P.aRailH, 0.25], [P.aRailX, P.aRailH, P.aBoxW - 0.15], 0.04, OR);
+      cyl(g, [P.aRailX, P.aBoxH, 0.25], [P.aRailX, P.aRailH, 0.25], 0.035, OR);
+      cyl(g, [P.aRailX, P.aBoxH, P.aBoxW - 0.15], [P.aRailX, P.aRailH, P.aBoxW - 0.15], 0.035, OR);
+      var aProf = [[0, 0], [0, P.aDeckH], [P.aDeckL, P.aDeckH], [P.aBankEnd, 0], [0, 0]];
+      prism(g, aProf, P.aBoxW, P.aW1, SIDE, MOD);
+      // striped side facing the public, with the Volcom stone
+      var sShape = new THREE.Shape(); aProf.forEach(function (p, i) { if (i === 0) sShape.moveTo(p[0], p[1]); else sShape.lineTo(p[0], p[1]); });
+      var sGeo = new THREE.ShapeGeometry(sShape); var sm = new THREE.Mesh(sGeo, STR); sm.position.z = P.aW1 + 0.005; g.add(sm);
+      var lg = new THREE.Mesh(new THREE.PlaneGeometry(0.75, 0.75), M(0, tex('stoneSide'))); lg.position.set(0.75, 0.5, P.aW1 + 0.012); g.add(lg);
+      cyl(g, [P.aDeckL, P.aDeckH, P.aBoxW], [P.aDeckL, P.aDeckH, P.aW1], 0.035, OR);
+      // red carpet (public entrance, outside the run)
+      box(g, P.carpet[0], 0, P.carpet[2], P.carpet[1], 0.02, P.carpet[3], M(0xa51d1d), true);
+
+      // C: central module, public side (W 3.44 -> 8): symmetric bank, up 2.6 m, ridge at 0.9 m, down 2.6 m
+      var cProf = [[P.cX0, 0], [P.cX1, P.cH], [P.cX3, 0], [P.cX0, 0]];
+      prism(g, cProf, P.cZ0, P.W, SIDE, MOD);
+      var cShape = new THREE.Shape(); cProf.forEach(function (p, i) { if (i === 0) cShape.moveTo(p[0], p[1]); else cShape.lineTo(p[0], p[1]); });
+      var cm = new THREE.Mesh(new THREE.ShapeGeometry(cShape), STR); cm.position.z = P.W + 0.005; g.add(cm);
+      function cY(x) { return x <= P.cX1 ? Math.max(0, (x - P.cX0) / (P.cX1 - P.cX0) * P.cH) : Math.max(0, (P.cX3 - x) / (P.cX3 - P.cX1) * P.cH); }
+
+      // C rail (as on the renders): angled leg on the up-bank, hump over the ridge, wave down the far bank, last post on the floor
+      var rz = P.railZ, rh = 0.42;
+      var rp = [[13.05, cY(13.05) + 0.02, rz], [13.35, cY(13.35) + rh, rz], [14.1, cY(14.1) + rh + 0.02, rz], [14.75, P.cH + rh + 0.1, rz],
+                [15.3, cY(15.3) + rh + 0.12, rz], [16.0, cY(16.0) + rh - 0.04, rz], [16.75, cY(16.75) + rh + 0.06, rz], [17.45, rh + 0.08, rz], [17.95, rh + 0.12, rz]];
+      tube(g, rp, 0.045, OR);
+      [[13.05, 0], [14.4, 0], [15.6, 0], [16.75, 0], [17.95, 0]].forEach(function (pp, k) {
+        if (k === 0) return; // the first leg is part of the tube
+        var x = pp[0], base = cY(x), top;
+        // rail height at x: interpolate the curve points
+        for (var q = 0; q < rp.length - 1; q++) if (x >= rp[q][0] && x <= rp[q + 1][0]) { var f = (x - rp[q][0]) / (rp[q + 1][0] - rp[q][0]); top = rp[q][1] + f * (rp[q + 1][1] - rp[q][1]); }
+        cyl(g, [x, base, rz], [x, top, rz], 0.04, OR);
+        box(g, x - 0.1, base, rz - 0.1, x + 0.1, base + 0.012, rz + 0.1, OR, true);
+      });
+      box(g, 12.95, cY(13.05), rz - 0.1, 13.15, cY(13.05) + 0.012, rz + 0.1, OR, true);
+
+      // black base on the floor along the wall, where the stone module stands
+      box(g, P.dX0, 0, 0, P.cX3, 0.03, P.dW + 0.2, M(0x1a1a1a), true);
+
+      // D: the Volcom stone module (3D wedge, as in the workshop photo): stone-shaped top, sloping up towards the
+      // quarter and towards the wall, black sides down to the floor, grey frame around the face
+      var outline = [[12.55, 1.2], [13.0, 0.25], [14.7, 0.25], [15.05, 1.2], [14.7, 2.15], [13.0, 2.15]];
+      function dH(x, z) { return 0.12 + 1.05 * (2.15 - z) / 1.9 + 0.15 * (x - 12.55) / 2.5; }
+      var pos = [], uvs = [], idxTop = [], n = outline.length;
+      outline.forEach(function (pt) { pos.push(pt[0], dH(pt[0], pt[1]), pt[1]); uvs.push((pt[0] - 12.55) / 2.5, (pt[1] - 0.25) / 1.9); });
+      var topGeo = new THREE.BufferGeometry();
+      topGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); topGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+      for (var f = 1; f < n - 1; f++) idxTop.push(0, f + 1, f);
+      topGeo.setIndex(idxTop); topGeo.computeVertexNormals();
+      add(g, topGeo, M(0, tex('dStone')), 0, 0, 0);
+      var sidePos = [], sideIdx = [];
+      for (var s = 0; s < n; s++) {
+        var a0 = outline[s], a1 = outline[(s + 1) % n], o = sidePos.length / 3;
+        sidePos.push(a0[0], 0, a0[1], a1[0], 0, a1[1], a1[0], dH(a1[0], a1[1]), a1[1], a0[0], dH(a0[0], a0[1]), a0[1]);
+        sideIdx.push(o, o + 1, o + 2, o, o + 2, o + 3);
+      }
+      var sideGeo = new THREE.BufferGeometry(); sideGeo.setAttribute('position', new THREE.Float32BufferAttribute(sidePos, 3)); sideGeo.setIndex(sideIdx); sideGeo.computeVertexNormals();
+      add(g, sideGeo, SIDE, 0, 0, 0);
+      // raised grey frame along the face edges
+      for (var e = 0; e < n; e++) {
+        var b0 = outline[e], b1 = outline[(e + 1) % n];
+        cyl(g, [b0[0], dH(b0[0], b0[1]) + 0.03, b0[1]], [b1[0], dH(b1[0], b1[1]) + 0.03, b1[1]], 0.045, M(0xb9b9b5));
+      }
+
+      // E: quarter, two sections
+      var R = P.qCoping - P.qStart;
+      function qProf() {
+        var pts = [[P.qStart, 0]], vert = Math.max(0, P.qH - R);
+        for (var i = 1; i <= 32; i++) { var a = i / 32 * Math.PI / 2; pts.push([P.qStart + R * Math.sin(a), R - R * Math.cos(a)]); }
+        if (vert > 0) pts.push([P.qCoping, P.qH]);
+        pts.push([P.L, P.qH]); pts.push([P.L, 0]); pts.push([P.qStart, 0]);
+        return pts;
+      }
+      if (R < P.qH) { /* radius smaller than height: the arc reaches vertical below the deck */ }
+      var qp = qProf();
+      prism(g, qp, 0, P.qSplit, SIDE, MOD);
+      prism(g, qp, P.qSplit, P.W, SIDE, MOD);
+      var qs = new THREE.Shape(); qp.forEach(function (p, i) { if (i === 0) qs.moveTo(p[0], p[1]); else qs.lineTo(p[0], p[1]); });
+      var qm = new THREE.Mesh(new THREE.ShapeGeometry(qs), STR); qm.position.z = P.W + 0.005; g.add(qm);
+      cyl(g, [P.qCoping, P.qH, 0], [P.qCoping, P.qH, P.W], 0.045, OR);
+      railing(g, 0.12, P.qSplit - 0.12, P.L - 0.06, P.qH, 4, OR);
+      railing(g, P.qSplit + 0.12, P.W - 0.08, P.L - 0.06, P.qH, 4, OR);
+    }
+
+    /* ---------- Card 02: the white render set (5 views of one model), rebuilt to scale ----------
+       Measured by photogrammetry on the renders (bank 0.9 m gives the scale): run 5.71 m wide,
+       symmetric bank 6.22 m long across the whole width, freestanding Televisi Star / Volcom panel
+       behind it (6.06 x 3.39 m on a 0.47 m black base), the stone module standing in the bank,
+       the rail measured in two views (same profile within 3 cm). No long wall on these renders. */
+    var R2 = {
+      W: 5.71, ridge: 14.49, half: 3.109, h: 0.9,
+      railZ: 4.191,
+      rail: [[-1.53, 0.45], [-1.27, 0.63], [-0.97, 0.87], [-0.68, 1.10], [-0.39, 1.28], [-0.1, 1.40], [0.18, 1.453], [0.45, 1.472], [0.74, 1.45],
+             [1.11, 1.367], [1.49, 1.244], [1.87, 1.141], [2.25, 1.037], [2.63, 0.925], [3.01, 0.84], [3.39, 0.802], [3.77, 0.79],
+             [4.15, 0.806], [4.53, 0.855], [4.89, 0.938], [5.131, 0.994]],
+      posts: [-0.688, 0.915, 2.569, 3.829, 5.131],
+      panel: { x0: 11.536, x1: 17.595, z: -0.306, d: 0.2, top: 3.391, base: 0.467 },
+      stone: { L: [11.625, 1.033, 1.78], TR: [13.819, 1.623, 1.651], R: [14.556, 0.847, 1.35], BR: [14.398, 0.206, 1.2], B: [13.405, -0.263, 1.206], n: [0.125, -0.254, 0.959], t: 0.45,
+               img: [[13.5, 58.7], [173.4, 12.6], [231, 63], [221.8, 102.5]] }
+    };
+    window.R2 = R2;
+    function railY(x) { // rail height at park x (linear between measured points)
+      var r = R2.rail, u = x - R2.ridge;
+      for (var i = 0; i < r.length - 1; i++) if (u >= r[i][0] && u <= r[i + 1][0]) return r[i][1] + (u - r[i][0]) / (r[i + 1][0] - r[i][0]) * (r[i + 1][1] - r[i][1]);
+      return r[r.length - 1][1];
+    }
+    function bankY(x) { return Math.max(0, R2.h * (1 - Math.abs(x - R2.ridge) / R2.half)); }
+    var PANEL = null;
+    function panelTex(onUpdate) { // TVS + Volcom artwork: from the card 02 render, completed with the front render where the stone / bank hide it
+      if (PANEL) return PANEL;
+      var w = 606, h = 292, cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      var cx = cv.getContext('2d'); cx.fillStyle = '#f2f2f0'; cx.fillRect(0, 0, w, h);
+      PANEL = new THREE.CanvasTexture(cv); PANEL.anisotropy = 8;
+      var data = {}, n = 0;
+      [['r02', 'assets/skatepark-3d-rail.jpg'], ['front', 'assets/panel-ref.jpg']].forEach(function (s) { imgData(s[1], function (d) { data[s[0]] = d; if (++n === 2) paint(); }); });
+      function paint() {
+        var out = cx.getImageData(0, 0, w, h), o = out.data, sq = [[0, 0], [1, 0], [1, 1], [0, 1]];
+        var hA = homography(sq, [[531, 11], [784.5, 18], [773, 248], [539.5, 188.5]]);      // card 02 render
+        var hB = homography(sq, [[10.5, 7.5], [429.8, 7.5], [420, 207], [27, 201]]);         // front render (crop)
+        function hidA(x, y) {
+          if (x > 425 && x < 552 && y > 138 && y < 216) return true;                           // the stone
+          if (x <= 623) return y > 238 - 0.12 * (x - 260) - 3;                                // bank, before its back corner
+          return y > 188 + (x - 623) * 0.752 - 3;                                             // bank back edge
+        }
+        function hidB(x, y) { return (x < 226 && y > 150) || (x > 205 && y > 182 + (x - 224) * 0.27); }
+        function put(d, p, idx) {
+          var xi = Math.round(p[0]), yi = Math.round(p[1]); if (xi < 0 || yi < 0 || xi >= d.width || yi >= d.height) return false;
+          var s = (yi * d.width + xi) * 4; o[idx] = d.data[s]; o[idx + 1] = d.data[s + 1]; o[idx + 2] = d.data[s + 2]; o[idx + 3] = 255; return true;
+        }
+        for (var j = 0; j < h; j++) for (var i = 0; i < w; i++) {
+          var u = (i + 0.5) / w, v = (j + 0.5) / h, idx = (j * w + i) * 4, p = hA(u, v);
+          if (!hidA(p[0], p[1])) { put(data.r02, p, idx); continue; }
+          var q = hB(u, v);
+          if (!hidB(q[0], q[1])) { put(data.front, q, idx); continue; }
+          var vv = v; while (vv > 0.05) { vv -= 0.2; p = hA(u, vv); if (!hidA(p[0], p[1])) break; }   // STAR pattern: repeat from higher up
+          put(data.r02, hA(u, Math.max(vv, 0.02)), idx);
+        }
+        cx.putImageData(out, 0, 0); PANEL.needsUpdate = true; if (onUpdate) onUpdate();
+      }
+      return PANEL;
+    }
+    function stoneFaceTex(onUpdate) { // stone graphic taken from the render (homography of the visible face), mirrored where the bank hides it
+      var S = R2.stone, W = 512, H = 344, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+      var cx = cv.getContext('2d'); cx.fillStyle = '#161616'; cx.fillRect(0, 0, W, H);
+      var t = new THREE.CanvasTexture(cv); t.anisotropy = 8;
+      imgData('assets/stone-face.png', function (d) {
+        // local face coords: u along the axis (0 at L, 2.95 at the crown), v across (-0.99 .. 0.99); TR side is v < 0
+        var loc = { L: [0, 0], TR: [2.048, -0.991], R: [2.949, -0.339], BR: [2.932, 0.339] };
+        var hh = homography([loc.L, loc.TR, loc.R, loc.BR], S.img);
+        var out = cx.getImageData(0, 0, W, H), o = out.data;
+        for (var j = 0; j < H; j++) for (var i = 0; i < W; i++) {
+          var u = i / W * 2.95, v = (j / H - 0.5) * 2 * 0.995;
+          var p = hh(u, v), xi = Math.round(p[0]), yi = Math.round(p[1]);
+          var lumOk = function (xx, yy) { if (xx < 0 || yy < 0 || xx >= d.width || yy >= d.height) return false; var s = (yy * d.width + xx) * 4; return d.data[s + 3] > 200; };
+          if (v > 0.12 || !lumOk(xi, yi)) { p = hh(u, -Math.abs(v)); xi = Math.round(p[0]); yi = Math.round(p[1]); } // lower half: mirror of the upper half
+          if (!lumOk(xi, yi)) continue;
+          var s = (yi * d.width + xi) * 4, idx = (j * W + i) * 4; o[idx] = d.data[s]; o[idx + 1] = d.data[s + 1]; o[idx + 2] = d.data[s + 2]; o[idx + 3] = 255;
+        }
+        cx.putImageData(out, 0, 0); t.needsUpdate = true; if (onUpdate) onUpdate();
+      });
+      return t;
+    }
+
+    function buildRender02(g, opt) {
+      var W = R2.W, MOD = M(0xf3f2ef), SIDE = M(0x1e1e1e), OR = M(ORANGE), STR = M(0, tex('stripes'));
+      // floor: one white slab with its tile grid
+      var tiles = canvasTex(512, 512, function (c, w, h) { c.fillStyle = '#f0efeb'; c.fillRect(0, 0, w, h); c.strokeStyle = '#c6c5c0'; c.lineWidth = 5; c.strokeRect(0, 0, w, h); });
+      tiles.wrapS = tiles.wrapT = THREE.RepeatWrapping; tiles.repeat.set(P.L / P.tileL, W / P.tileW);
+      var fg = new THREE.PlaneGeometry(P.L, W); fg.rotateX(-Math.PI / 2);
+      var fl = add(g, fg, M(0, tiles), P.L / 2, 0, W / 2, true); fl.castShadow = false;
+      box(g, 0, -0.08, 0, P.L, -0.004, W, M(0x2a2a2a), true);
+      var sz = W / P.W; // the ends keep their lengths and heights; their widths follow the 5.71 m run
+
+      // A: entrance (same modules as the plan, widths scaled to the run)
+      var bw = P.aBoxW * sz, w1 = P.aW1 * sz;
+      box(g, 0, 0, 0, P.aBoxL, P.aBoxH, bw, [SIDE, SIDE, MOD, SIDE, SIDE, SIDE]);
+      var dec = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 0.55), M(0, tex('stoneTop'))); dec.rotation.x = -Math.PI / 2; dec.position.set(P.aBoxL * 0.55, P.aBoxH + 0.005, bw * 0.55); g.add(dec);
+      cyl(g, [P.aRailX, P.aRailH, 0.2], [P.aRailX, P.aRailH, bw - 0.12], 0.04, OR);
+      cyl(g, [P.aRailX, P.aBoxH, 0.2], [P.aRailX, P.aRailH, 0.2], 0.035, OR);
+      cyl(g, [P.aRailX, P.aBoxH, bw - 0.12], [P.aRailX, P.aRailH, bw - 0.12], 0.035, OR);
+      var aProf = [[0, 0], [0, P.aDeckH], [P.aDeckL, P.aDeckH], [P.aBankEnd, 0], [0, 0]];
+      prism(g, aProf, bw, w1, SIDE, MOD);
+      cyl(g, [P.aDeckL, P.aDeckH, bw], [P.aDeckL, P.aDeckH, w1], 0.035, OR);
+
+      // C: symmetric bank across the whole run, black side faces
+      var x0 = R2.ridge - R2.half, x1 = R2.ridge + R2.half;
+      prism(g, [[x0, 0], [R2.ridge, R2.h], [x1, 0], [x0, 0]], 0, W, SIDE, MOD);
+
+      // rail: measured profile, five posts with square base plates
+      var rz = R2.railZ, pts = R2.rail.map(function (p) { return [R2.ridge + p[0], p[1], rz]; });
+      tube(g, pts, 0.035, OR);
+      R2.posts.forEach(function (u) {
+        var x = R2.ridge + u, b = bankY(x), top = railY(x);
+        cyl(g, [x, b, rz], [x, top, rz], 0.032, OR);
+        var plate = box(g, x - 0.11, b, rz - 0.11, x + 0.11, b + 0.015, rz + 0.11, OR, true);
+        if (b > 0) { var sl = Math.atan(R2.h / R2.half) * (x < R2.ridge ? 1 : -1); plate.rotation.z = sl; }
+      });
+
+      // the stone module: pentagon prism standing in the bank, graphic face towards the run
+      var S = R2.stone, nv = new THREE.Vector3(S.n[0], S.n[1], S.n[2]).normalize();
+      var front = ['L', 'TR', 'R', 'BR', 'B'].map(function (k) { return new THREE.Vector3(S[k][0], S[k][1], S[k][2]); });
+      var back = front.map(function (v) { return v.clone().addScaledVector(nv, -S.t); });
+      var loc = [[0, 0], [2.048, -0.991], [2.949, -0.339], [2.932, 0.339], [2.048, 0.991]];
+      function face(vs, uv, mat) {
+        var gg = new THREE.BufferGeometry(), pos = [], uvs = [];
+        vs.forEach(function (v, i) { pos.push(v.x, v.y, v.z); uvs.push(uv[i][0], uv[i][1]); });
+        gg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); gg.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+        var idx = []; for (var f = 1; f < vs.length - 1; f++) idx.push(0, f, f + 1);
+        gg.setIndex(idx); gg.computeVertexNormals(); return add(g, gg, mat, 0, 0, 0);
+      }
+      var sTex = stoneFaceTex(opt.onUpdate), uvF = loc.map(function (p) { return [p[0] / 2.95, 1 - (p[1] / 0.995 + 1) / 2]; });
+      face(front, uvF, M(0, sTex));
+      face(back, uvF, M(0, sTex));
+      for (var e = 0; e < 5; e++) { var a = front[e], b2 = front[(e + 1) % 5], c2 = back[(e + 1) % 5], d2 = back[e]; face([a, b2, c2, d2], [[0, 0], [1, 0], [1, 1], [0, 1]], M(0xe9e9e6)); }
+
+      // freestanding panel behind the middle: TVS + Volcom artwork on a black base
+      var pn = R2.panel;
+      box(g, pn.x0, 0, pn.z - pn.d, pn.x1, pn.base, pn.z, M(0x161616));
+      box(g, pn.x0, pn.base, pn.z - pn.d, pn.x1, pn.top, pn.z, [M(0x1a1a1a), M(0x1a1a1a), M(0x1a1a1a), M(0x1a1a1a), M(0, panelTex(opt.onUpdate)), M(0x1a1a1a)]);
+
+      // E: quarter, two sections (widths scaled to the run), black railings and red coping as on the renders
+      var Rq = P.qCoping - P.qStart, split = P.qSplit * sz, BL = M(0x151515);
+      var qp = [[P.qStart, 0]];
+      for (var i = 1; i <= 32; i++) { var an = i / 32 * Math.PI / 2; qp.push([P.qStart + Rq * Math.sin(an), Rq - Rq * Math.cos(an)]); }
+      if (P.qH > Rq) qp.push([P.qCoping, P.qH]);
+      qp.push([P.L, P.qH]); qp.push([P.L, 0]); qp.push([P.qStart, 0]);
+      prism(g, qp, 0, split, SIDE, MOD);
+      prism(g, qp, split, W, SIDE, MOD);
+      cyl(g, [P.qCoping, P.qH, 0], [P.qCoping, P.qH, W], 0.03, M(0xd22222));
+      railing(g, 0.1, split - 0.1, P.L - 0.06, P.qH, 4, BL);
+      railing(g, split + 0.1, W - 0.08, P.L - 0.06, P.qH, 4, BL);
+    }
+
+    function lights(scene, white) {
+      scene.add(new THREE.HemisphereLight(0xffffff, 0xc8c8c2, white ? 0.72 : 0.92));
+      var sun = new THREE.DirectionalLight(0xffffff, white ? 0.62 : 0.55); sun.castShadow = true;
+      if (white) sun.position.set(15 - 14, 14, 3 + 10); else sun.position.set(6, 22, 18);   // card 02: light from the entrance side, as on the renders
+      sun.shadow.mapSize.set(2048, 2048); var sc = sun.shadow.camera; sc.left = -22; sc.right = 22; sc.top = 22; sc.bottom = -22; sc.near = 1; sc.far = 90;
+      sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.03;
+      sun.target.position.set(15, 0, 4); scene.add(sun.target); scene.add(sun);
+    }
+
+    // Scene with a turntable pivot at the middle of the park
+    window.buildParkScene = function (opt) {
+      opt = opt || {};
+      var scene = new THREE.Scene(); lights(scene, !!opt.white);
+      var cz = opt.white ? R2.W / 2 : P.W / 2;
+      var pivot = new THREE.Group(); pivot.position.set(P.L / 2, 0, cz); scene.add(pivot);
+      var g = new THREE.Group(); g.position.set(-P.L / 2, 0, -cz); pivot.add(g);
+      if (opt.drawingScale) { g.scale.z = 0.652; }
+      if (opt.white) buildRender02(g, opt); else buildPark(g, false, opt);
+      scene.userData.pivot = pivot;
+      return scene;
+    };
+
+
+    /* ---------- Hall (card 01): model supplied by Carl (carte-01-hall-3d.html), pivot on the camera target ---------- */
+    window.buildHallScene = function () {
+      var WHITE = 0xf4f4f1, WOOD = 0xb0602a, lineMat = new THREE.LineBasicMaterial({ color: 0x111111, transparent: true, opacity: 0.45 });
+      function mat(color, map) { var m = new THREE.MeshLambertMaterial({ color: map ? 0xffffff : color }); if (map) m.map = map; return m; }
+      function hbox(g, w, h, d, color, x, y, z) {
+        var geo = new THREE.BoxGeometry(w, h, d), m = new THREE.Mesh(geo, mat(color));
+        m.position.set(x || 0, (y || 0) + h / 2, z || 0); m.castShadow = true; m.receiveShadow = true;
+        m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo, 25), lineMat));
+        g.add(m); return m;
+      }
+      var scene = new THREE.Scene(), look = [-0.5, 2.6, -14];
+      scene.add(new THREE.HemisphereLight(0xffffff, 0xbdbdb6, 0.95));
+      var sun = new THREE.DirectionalLight(0xffffff, 0.65); sun.position.set(-6, 22, 14); sun.castShadow = true;
+      sun.shadow.mapSize.set(2048, 2048); var sc = sun.shadow.camera; sc.left = -30; sc.right = 30; sc.top = 30; sc.bottom = -30; sc.far = 90;
+      sun.target.position.set(look[0], 0, look[2]); scene.add(sun.target); scene.add(sun);
+      var pivot = new THREE.Group(); pivot.position.set(look[0], 0, look[2]); scene.add(pivot);
+      var g = new THREE.Group(); g.position.set(-look[0], 0, -look[2]); pivot.add(g);
+      var ht = canvasTex(256, 256, function (c, w, h) {
+        c.fillStyle = '#6e6e6c'; c.fillRect(0, 0, w, h); c.strokeStyle = '#585856'; c.lineWidth = 2;
+        c.setLineDash([10, 8]); c.strokeRect(0, 0, w, h);
+      });
+      ht.wrapS = ht.wrapT = THREE.RepeatWrapping; ht.repeat.set(9, 16);
+      var fl = hbox(g, 27, 0.1, 48, 0xffffff, 1.5, -0.1, -18);
+      fl.material = [mat(0x555555), mat(0x555555), mat(0, ht), mat(0x555555), mat(0x555555), mat(0x555555)];
+      hbox(g, 8, 0.03, 26, 0xc4c4c1, -6.3, 0, -9);                                  // skatepark footprint
+      hbox(g, 0.25, 9, 48, 0x9a9a98, -10.5, 0, -18);                                // left wall
+      hbox(g, 0.25, 9, 48, 0xa4a4a1, 14.5, 0, -18);                                 // right wall
+      hbox(g, 25, 9, 0.25, 0xe9e9e7, 2, 0, -42);                                    // far wall
+      hbox(g, 4, 3.2, 0.3, 0x1c1c1c, -4, 0, -41.8);                                 // dark opening at the far end
+      for (var z = 3; z >= -40; z -= 3.6) { hbox(g, 0.6, 9, 0.5, WHITE, -10.1, 0, z); hbox(g, 0.6, 9, 0.5, WHITE, 14.1, 0, z); }
+      hbox(g, 0.1, 0.25, 48, 0x111111, -10.3, 0.9, -18);                            // black band along the left wall
+      for (var c = 4; c >= -38; c -= 6.5) {                                         // column line beside the footprint
+        hbox(g, 1.1, 2.7, 1.1, WOOD, -1.2, 0, c); hbox(g, 0.85, 6.3, 0.85, WHITE, -1.2, 2.7, c);
+      }
+      hbox(g, 25, 1.3, 0.8, WOOD, 2, 6.3, 4);                                       // wooden beam band at the front
+      hbox(g, 25, 1.4, 0.8, 0xf2f2f0, 2, 7.6, 4);
+      hbox(g, 1.2, 9, 1.2, WHITE, -1.2, 0, 4.6);                                    // front white column
+      hbox(g, 0.1, 2.6, 1.8, 0x6b3a1a, 14.35, 0, -3);                               // double door, right wall
+      scene.userData.pivot = pivot;
+      return scene;
+    };
+
+    window.PARK_VIEWS = {
+      iso: { ref: 'assets/skatepark-iso.jpg' },
+      rail: { ref: 'assets/skatepark-3d-rail.jpg', white: true },
+      stand: { ref: 'assets/stand-volcom.jpg' },
+      hall: { ref: 'assets/hall-sketchup.jpg' }
+    };
+    window.PARK_CAMS = {
+      rail: { pos: [30.544, 5.248, 9.891], look: [22.042, 2.462, 5.423], up: [-0.2237, 0.9593, -0.1726], fov: 22.05 },   // fitted on the render (rms 4 px)
+      stand: { pos: [0.22, 1.72, 10.18], look: [4.91, 1.91, 1.35], fov: 36 },
+      hall: { pos: [-6.3, 3.4, 16], look: [-6.3, 2.6, -14], fov: 50,
+          // the cursor drives a curved dolly: from the 6th pillar of the right wall back to the view above
+          path: { from: [11, 3.4, -15], via: [11, 3.4, 14], fromLook: [-10.4, 2.6, -15] } }
+    };
+    window.makeParkCamera = function (view, W, H) {
+      if (view === 'iso') {
+        var k = 31.85 * 30.48 / 30, s = k * Math.sqrt(1.5);
+        var ox = 318.5, oy = 651.0;
+        var cam = new THREE.OrthographicCamera(-ox / s, (W - ox) / s, oy / s, -(H - oy) / s, -200, 200);
+        var R = new THREE.Vector3(1, 0, 1).normalize();
+        var U = new THREE.Vector3(0.4082, 0.8165, -0.4082);
+        var B = new THREE.Vector3().crossVectors(R, U);
+        cam.position.copy(B.multiplyScalar(60)); cam.up.copy(U); cam.lookAt(0, 0, 0); cam.updateProjectionMatrix();
+        return cam;
+      }
+      var c = window.PARK_CAMS[view];
+      var cam2 = new THREE.PerspectiveCamera(c.fov, W / H, 0.1, 300);
+      cam2.position.set(c.pos[0], c.pos[1], c.pos[2]); if (c.up) cam2.up.set(c.up[0], c.up[1], c.up[2]); cam2.lookAt(c.look[0], c.look[1], c.look[2]); cam2.updateProjectionMatrix();
+      return cam2;
+    };
+  })();
+
+  /* Card 02: model rebuilt from the white renders (see the park model above), camera fitted on the render */
+  function viewer02(shot) {
+    var renderer;
+    try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); } catch (e) { return null; }
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    var scene = window.buildParkScene({ white: true, onUpdate: function () { req(); } });
+    var pivot = scene.userData.pivot, ROT = 0.75;
+    var c = window.PARK_CAMS.rail, refAspect = 1080 / 514;
+    var cam = new THREE.PerspectiveCamera(c.fov, refAspect, 0.1, 300);
+    cam.position.set(c.pos[0], c.pos[1], c.pos[2]); cam.up.set(c.up[0], c.up[1], c.up[2]); cam.lookAt(c.look[0], c.look[1], c.look[2]);
+    var hfov = 2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(c.fov) / 2) * refAspect);
+    shot.appendChild(renderer.domElement);
+    shot.classList.add('is3d');
+    var angle = 0, raf = 0;
+    function draw() { raf = 0; pivot.rotation.y = THREE.MathUtils.degToRad(angle * ROT); renderer.render(scene, cam); }
+    function req() { if (!raf) raf = requestAnimationFrame(draw); }
+    function size() {
+      var w = shot.clientWidth, h = shot.clientHeight; if (!w || !h) return;
+      renderer.setSize(w, h, false);
+      var asp = w / h; cam.aspect = asp; cam.fov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(hfov / 2) / asp));
+      cam.updateProjectionMatrix(); req();
+    }
+    if ('ResizeObserver' in window) new ResizeObserver(size).observe(shot); else window.addEventListener('resize', size);
+    size();
+    return { set: function (a) { angle = a; req(); }, start: 0 };
+  }
+
   function viewer(shot, key, idx) {
+    if (key === 'modules') return viewer02(shot);
     var M = MODELS[key];
     var renderer;
     try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); } catch (e) { return null; }
