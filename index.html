@@ -1555,7 +1555,8 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
              [4.15, 0.806], [4.53, 0.855], [4.89, 0.938], [5.131, 0.994]],
       posts: [-0.688, 0.915, 2.569, 3.829, 5.131],
       panel: { x0: 11.536, x1: 17.595, z: -0.306, d: 0.2, top: 3.391, base: 0.467 },
-      stone: { L: [11.625, 1.033, 1.78], TR: [13.819, 1.623, 1.651], R: [14.556, 0.847, 1.35], BR: [14.398, 0.206, 1.2], B: [13.405, -0.263, 1.206], n: [0.125, -0.254, 0.959], t: 0.45,
+      // stone: axis level and parallel to the panel, graphic face vertical: its thickness edges run parallel to the bank ridge (Carl's sketch), best fit on the renders
+      stone: { L: [11.61, 0.70, 1.55], TR: [13.658, 1.691, 1.55], R: [14.559, 1.039, 1.55], BR: [14.542, 0.361, 1.55], B: [13.658, -0.291, 1.55], n: [0, 0, 1], t: 0.45,
                img: [[13.5, 58.7], [173.4, 12.6], [231, 63], [221.8, 102.5]] }
     };
     window.R2 = R2;
@@ -1794,7 +1795,7 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     var scene = window.buildParkScene({ white: true, onUpdate: function () { req(); } });
-    var pivot = scene.userData.pivot, ROT = 0.75;
+    var pivot = scene.userData.pivot, ROT = -0.75;   // cursor left = front view, as on card 01
     var c = window.PARK_CAMS.rail, refAspect = 1080 / 514;
     var cam = new THREE.PerspectiveCamera(c.fov, refAspect, 0.1, 300);
     cam.position.set(c.pos[0], c.pos[1], c.pos[2]); cam.up.set(c.up[0], c.up[1], c.up[2]); cam.lookAt(c.look[0], c.look[1], c.look[2]);
