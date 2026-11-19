@@ -1140,7 +1140,7 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
   }
 
   var MODELS = {
-    hall: { cam: [-0.5, 3.4, 16], look: [-0.5, 2.6, -14], fov: 50, rot: 1 / 3,
+    hall: { cam: [-6.3, 3.4, 16], look: [-6.3, 2.6, -14], fov: 50, rot: 1 / 3,
       // the cursor drives a curved dolly: from the 6th pillar of the right wall back to the view above
       path: { from: [11, 3.4, -15], via: [11, 3.4, 14], fromLook: [-10.4, 2.6, -15] }, build: function (g) {   // model supplied by Carl (carte-01-hall-3d.html)
       var ht = canvasTex(256, 256, function (c, w, h) {
@@ -1244,7 +1244,7 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
     var group = new THREE.Group(); group.position.set(-piv[0], 0, -piv[2]); M.build(group); pivot.add(group);
     shot.appendChild(renderer.domElement);
     shot.classList.add('is3d');
-    var P = M.path, angle = P ? -MAX : 0, raf = 0;
+    var P = M.path, angle = 0, raf = 0;   // the hall card opens mid-way along its dolly
     function dolly(a) {
       var t = (a + MAX) / (2 * MAX); t = t * t * (3 - 2 * t);
       var q = function (i) { return (1 - t) * (1 - t) * P.from[i] + 2 * (1 - t) * t * P.via[i] + t * t * M.cam[i]; };
