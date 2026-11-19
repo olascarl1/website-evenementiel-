@@ -1420,7 +1420,7 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
               p = hCircle((L - 14.74) / 2.86, v);
               sample(data.rail, p[0], p[1], idx);
             } else {
-              var l = L / 0.984 - 0.43, w = 0.43, hD = yM / P.wallH * 3.85, k = 31.85;
+              var l = L / 0.984 - 0.43, w = -0.149, hD = yM / P.wallH * 3.85, k = 31.85;
               sample(data.iso, 318.5 + k * 0.866 * (l + w), 637.3 + k * (-0.5 * l + 0.5 * w - hD), idx);
             }
           }
@@ -1622,15 +1622,32 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
       return t;
     }
 
-    function buildRender02(g, opt) {
-      var W = R2.W, MOD = M(0xf3f2ef), SIDE = M(0x1e1e1e), OR = M(ORANGE), STR = M(0, tex('stripes'));
-      // floor: one white slab with its tile grid
-      var tiles = canvasTex(512, 512, function (c, w, h) { c.fillStyle = '#f0efeb'; c.fillRect(0, 0, w, h); c.strokeStyle = '#c6c5c0'; c.lineWidth = 5; c.strokeRect(0, 0, w, h); });
-      tiles.wrapS = tiles.wrapT = THREE.RepeatWrapping; tiles.repeat.set(P.L / P.tileL, W / P.tileW);
+    /* One run, two looks: white (card 02, the renders) or plan (card 03, the isometric drawing: dark modules,
+       orange stripes and railings, the wall with its murals). Same geometry in both. */
+    function buildRun(g, opt) {
+      var white = !!opt.white, W = R2.W;
+      var MOD = white ? M(0xf3f2ef) : M(0x232323), SIDE = white ? M(0x1e1e1e) : M(0x181818), OR = M(ORANGE), STR = M(0, tex('stripes'));
+      function stripes(pts, z) { // striped side face (plan look), slightly in front of the module side
+        var sh = new THREE.Shape(); pts.forEach(function (p, i) { if (i === 0) sh.moveTo(p[0], p[1]); else sh.lineTo(p[0], p[1]); });
+        var m = new THREE.Mesh(new THREE.ShapeGeometry(sh), STR); m.position.z = z; g.add(m); return m;
+      }
+      // floor with its tile grid
+      var tiles = canvasTex(512, 512, function (c, w, h) { c.fillStyle = white ? '#f0efeb' : '#a6a6a4'; c.fillRect(0, 0, w, h); c.strokeStyle = white ? '#c6c5c0' : '#3c3c3a'; c.lineWidth = 5; c.strokeRect(0, 0, w, h); });
+      tiles.wrapS = tiles.wrapT = THREE.RepeatWrapping; tiles.repeat.set(white ? P.L / P.tileL : P.L / 2.93, white ? W / P.tileW : W / 1.47);   // plan: sheets 2.93 x 1.47 m, joints measured on the drawing
+      if (!white) tiles.offset.set(-0.28 / 2.93, 0.041);
       var fg = new THREE.PlaneGeometry(P.L, W); fg.rotateX(-Math.PI / 2);
       var fl = add(g, fg, M(0, tiles), P.L / 2, 0, W / 2, true); fl.castShadow = false;
-      box(g, 0, -0.08, 0, P.L, -0.004, W, M(0x2a2a2a), true);
+      box(g, 0, -0.08, 0, P.L, -0.004, W, M(white ? 0x2a2a2a : 0x8a8a88), true);
       var sz = W / P.W; // the ends keep their lengths and heights; their widths follow the 5.71 m run
+      if (!white) {
+        // wall with its murals (the original drawings projected onto it), black caps over the Televisi Star / Volcom panel
+        box(g, 0, 0, -0.12, P.L, P.wallH, 0, M(0xf7f7f5));
+        box(g, 0, P.wallH, -0.14, P.L, P.wallH + 0.04, 0.02, M(0x9a9a98), true);
+        var mm = new THREE.Mesh(new THREE.PlaneGeometry(P.L, P.wallH), new THREE.MeshLambertMaterial({ map: getMural(opt.onUpdate) }));
+        mm.position.set(P.L / 2, P.wallH / 2, 0.006); mm.receiveShadow = true; g.add(mm);
+        box(g, 11.53, P.wallH, 0, 14.74, P.wallH + 0.1, 0.12, M(0x161616));
+        box(g, 14.74, P.wallH, 0, 17.6, P.wallH + 0.1, 0.12, M(0x161616));
+      }
 
       // A: entrance (same modules as the plan, widths scaled to the run)
       var bw = P.aBoxW * sz, w1 = P.aW1 * sz;
@@ -1642,10 +1659,16 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
       var aProf = [[0, 0], [0, P.aDeckH], [P.aDeckL, P.aDeckH], [P.aBankEnd, 0], [0, 0]];
       prism(g, aProf, bw, w1, SIDE, MOD);
       cyl(g, [P.aDeckL, P.aDeckH, bw], [P.aDeckL, P.aDeckH, w1], 0.035, OR);
+      if (!white) {
+        stripes(aProf, w1 + 0.005);
+        var lg = new THREE.Mesh(new THREE.PlaneGeometry(0.75, 0.75), M(0, tex('stoneSide'))); lg.position.set(0.75, 0.5, w1 + 0.012); g.add(lg);
+        box(g, P.carpet[0], 0, P.carpet[2] * sz, P.carpet[1], 0.02, P.carpet[3] * sz, M(0xa51d1d), true);   // red carpet, public entrance
+      }
 
       // C: symmetric bank across the whole run, black side faces
       var x0 = R2.ridge - R2.half, x1 = R2.ridge + R2.half;
       prism(g, [[x0, 0], [R2.ridge, R2.h], [x1, 0], [x0, 0]], 0, W, SIDE, MOD);
+      if (!white) stripes([[x0, 0], [R2.ridge, R2.h], [x1, 0], [x0, 0]], W + 0.005);
 
       // rail: measured profile, five posts with square base plates
       var rz = R2.railZ, pts = R2.rail.map(function (p) { return [R2.ridge + p[0], p[1], rz]; });
@@ -1674,10 +1697,12 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
       face(back, uvF, M(0, sTex));
       for (var e = 0; e < 5; e++) { var a = front[e], b2 = front[(e + 1) % 5], c2 = back[(e + 1) % 5], d2 = back[e]; face([a, b2, c2, d2], [[0, 0], [1, 0], [1, 1], [0, 1]], M(0xe9e9e6)); }
 
-      // freestanding panel behind the middle: TVS + Volcom artwork on a black base
+      // freestanding panel behind the middle (renders only: on the plan it is part of the wall)
       var pn = R2.panel;
-      box(g, pn.x0, 0, pn.z - pn.d, pn.x1, pn.base, pn.z, M(0x161616));
-      box(g, pn.x0, pn.base, pn.z - pn.d, pn.x1, pn.top, pn.z, [M(0x1a1a1a), M(0x1a1a1a), M(0x1a1a1a), M(0x1a1a1a), M(0, panelTex(opt.onUpdate)), M(0x1a1a1a)]);
+      if (white) {
+        box(g, pn.x0, 0, pn.z - pn.d, pn.x1, pn.base, pn.z, M(0x161616));
+        box(g, pn.x0, pn.base, pn.z - pn.d, pn.x1, pn.top, pn.z, [M(0x1a1a1a), M(0x1a1a1a), M(0x1a1a1a), M(0x1a1a1a), M(0, panelTex(opt.onUpdate)), M(0x1a1a1a)]);
+      }
 
       // E: quarter, two sections (widths scaled to the run), black railings and red coping as on the renders
       var Rq = P.qCoping - P.qStart, split = P.qSplit * sz, BL = M(0x151515);
@@ -1687,9 +1712,10 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
       qp.push([P.L, P.qH]); qp.push([P.L, 0]); qp.push([P.qStart, 0]);
       prism(g, qp, 0, split, SIDE, MOD);
       prism(g, qp, split, W, SIDE, MOD);
-      cyl(g, [P.qCoping, P.qH, 0], [P.qCoping, P.qH, W], 0.03, M(0xd22222));
-      railing(g, 0.1, split - 0.1, P.L - 0.06, P.qH, 4, BL);
-      railing(g, split + 0.1, W - 0.08, P.L - 0.06, P.qH, 4, BL);
+      cyl(g, [P.qCoping, P.qH, 0], [P.qCoping, P.qH, W], white ? 0.03 : 0.045, white ? M(0xd22222) : OR);
+      railing(g, 0.1, split - 0.1, P.L - 0.06, P.qH, 4, white ? BL : OR);
+      railing(g, split + 0.1, W - 0.08, P.L - 0.06, P.qH, 4, white ? BL : OR);
+      if (!white) stripes(qp, W + 0.005);
     }
 
     function lights(scene, white) {
@@ -1705,11 +1731,11 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
     window.buildParkScene = function (opt) {
       opt = opt || {};
       var scene = new THREE.Scene(); lights(scene, !!opt.white);
-      var cz = opt.white ? R2.W / 2 : P.W / 2;
+      var cz = R2.W / 2;
       var pivot = new THREE.Group(); pivot.position.set(P.L / 2, 0, cz); scene.add(pivot);
       var g = new THREE.Group(); g.position.set(-P.L / 2, 0, -cz); pivot.add(g);
       if (opt.drawingScale) { g.scale.z = 0.652; }
-      if (opt.white) buildRender02(g, opt); else buildPark(g, false, opt);
+      buildRun(g, opt);
       scene.userData.pivot = pivot;
       return scene;
     };
@@ -1773,7 +1799,7 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
     window.makeParkCamera = function (view, W, H) {
       if (view === 'iso') {
         var k = 31.85 * 30.48 / 30, s = k * Math.sqrt(1.5);
-        var ox = 318.5, oy = 651.0;
+        var ox = 318.5 - 28.02 * 0.57, oy = 651.0 - 16.18 * 0.57;   // the drawing wall base sits 0.57 m behind the old origin
         var cam = new THREE.OrthographicCamera(-ox / s, (W - ox) / s, oy / s, -(H - oy) / s, -200, 200);
         var R = new THREE.Vector3(1, 0, 1).normalize();
         var U = new THREE.Vector3(0.4082, 0.8165, -0.4082);
@@ -1816,8 +1842,43 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
     return { set: function (a) { angle = a; req(); }, start: 0 };
   }
 
+  /* Card 03: the same run in the look of the isometric plan, true isometric camera framed on the run */
+  function viewer03(shot) {
+    var renderer;
+    try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); } catch (e) { return null; }
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    var scene = window.buildParkScene({ white: false, onUpdate: function () { req(); } });
+    var pivot = scene.userData.pivot;
+    var R = new THREE.Vector3(1, 0, 1).normalize(), U = new THREE.Vector3(0.4082, 0.8165, -0.4082);
+    var cam = new THREE.OrthographicCamera(-1, 1, 1, -1, -200, 200);
+    cam.position.copy(new THREE.Vector3().crossVectors(R, U).multiplyScalar(60)); cam.up.copy(U); cam.lookAt(0, 0, 0);
+    var bb = { x0: 1e9, x1: -1e9, y0: 1e9, y1: -1e9 };
+    [0, 30].forEach(function (x) { [0, 3.6].forEach(function (y) { [-0.2, 7.0].forEach(function (z) {
+      var v = new THREE.Vector3(x, y, z), sx = v.dot(R), sy = v.dot(U);
+      bb.x0 = Math.min(bb.x0, sx); bb.x1 = Math.max(bb.x1, sx); bb.y0 = Math.min(bb.y0, sy); bb.y1 = Math.max(bb.y1, sy);
+    }); }); });
+    shot.appendChild(renderer.domElement);
+    shot.classList.add('is3d');
+    var angle = 0, raf = 0;
+    function draw() { raf = 0; pivot.rotation.y = THREE.MathUtils.degToRad(angle); renderer.render(scene, cam); }
+    function req() { if (!raf) raf = requestAnimationFrame(draw); }
+    function size() {
+      var w = shot.clientWidth, h = shot.clientHeight; if (!w || !h) return;
+      renderer.setSize(w, h, false);
+      var asp = w / h, cx = (bb.x0 + bb.x1) / 2, cy = (bb.y0 + bb.y1) / 2, hw = (bb.x1 - bb.x0) / 2 * 1.08, hh = (bb.y1 - bb.y0) / 2 * 1.08;
+      if (hw / hh > asp) hh = hw / asp; else hw = hh * asp;
+      cam.left = cx - hw; cam.right = cx + hw; cam.top = cy + hh; cam.bottom = cy - hh;
+      cam.updateProjectionMatrix(); req();
+    }
+    if ('ResizeObserver' in window) new ResizeObserver(size).observe(shot); else window.addEventListener('resize', size);
+    size();
+    return { set: function (a) { angle = a; req(); }, start: 0 };
+  }
+
   function viewer(shot, key, idx) {
     if (key === 'modules') return viewer02(shot);
+    if (key === 'plan') return viewer03(shot);
     var M = MODELS[key];
     var renderer;
     try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); } catch (e) { return null; }
