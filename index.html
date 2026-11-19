@@ -1246,7 +1246,7 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
     shot.classList.add('is3d');
     var P = M.path, angle = 0, raf = 0;   // the hall card opens mid-way along its dolly
     function dolly(a) {
-      var t = (a + MAX) / (2 * MAX); t = t * t * (3 - 2 * t);
+      var t = (MAX - a) / (2 * MAX); t = t * t * (3 - 2 * t);   // cursor right = 6th pillar, cursor left = centred view
       var q = function (i) { return (1 - t) * (1 - t) * P.from[i] + 2 * (1 - t) * t * P.via[i] + t * t * M.cam[i]; };
       var l = function (i) { return P.fromLook[i] + (M.look[i] - P.fromLook[i]) * t; };
       camera.position.set(q(0), q(1), q(2)); camera.lookAt(l(0), l(1), l(2));
