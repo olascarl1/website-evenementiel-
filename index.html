@@ -1797,7 +1797,8 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
     };
     window.PARK_CAMS = {
       rail: { pos: [30.544, 5.248, 9.891], look: [22.042, 2.462, 5.423], up: [-0.2237, 0.9593, -0.1726], fov: 22.05 },   // fitted on the render (rms 4 px)
-      stand: { pos: [1.207, 1.929, 11.172], look: [5.021, 1.891, 1.928], up: [0.0099, 1, 0], fov: 35.54 },   // fitted on the floor joints of the stand render (rms 2 px)
+      stand: { pos: [1.207, 1.929, 11.172], look: [5.021, 1.891, 1.928], up: [0.0099, 1, 0], fov: 35.54,
+        aerial: { pos: [14.5, 12.5, 15.5], look: [14.5, 0.6, 2.2] } },   // cursor right: rises to an aerial view over the middle of the run   // fitted on the floor joints of the stand render (rms 2 px)
       hall: { pos: [-6.3, 3.4, 16], look: [-6.3, 2.6, -14], fov: 50,
           // the cursor drives a curved dolly: from the 6th pillar of the right wall back to the view above
           path: { from: [11, 3.4, -15], via: [11, 3.4, 14], fromLook: [-10.4, 2.6, -15] } }
@@ -1900,8 +1901,17 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
     var hfov = 2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(c.fov) / 2) * refAspect);
     shot.appendChild(renderer.domElement);
     shot.classList.add('is3d');
-    var angle = 0, raf = 0;
-    function draw() { raf = 0; pivot.rotation.y = THREE.MathUtils.degToRad(angle * ROT); renderer.render(scene, cam); }
+    var angle = 0, raf = 0, rise = c.aerial;
+    function draw() { // cursor left turns the run, cursor right flies from the ground view up over the middle
+      raf = 0;
+      var t = Math.max(0, angle) / MAX; t = t * t * (3 - 2 * t);
+      pivot.rotation.y = THREE.MathUtils.degToRad(Math.min(0, angle) * ROT);
+      var A = c.pos, B = rise.pos, LA = c.look, LB = rise.look, arc = Math.sin(t * Math.PI) * 2.5;
+      cam.position.set(A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t + arc, A[2] + (B[2] - A[2]) * t);
+      cam.up.set(c.up[0] * (1 - t), 1, 0);
+      cam.lookAt(LA[0] + (LB[0] - LA[0]) * t, LA[1] + (LB[1] - LA[1]) * t, LA[2] + (LB[2] - LA[2]) * t);
+      renderer.render(scene, cam);
+    }
     function req() { if (!raf) raf = requestAnimationFrame(draw); }
     function size() {
       var w = shot.clientWidth, h = shot.clientHeight; if (!w || !h) return;
