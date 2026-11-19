@@ -1394,6 +1394,12 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
         var hStand = homography(sq, [[137.7, 199.5], [1255.7, 258.3], [1255.7, 554.2], [137.7, 609.3]]);
         var hTvs = homography(sq, [[1255.7, 258.3], [1427, 267.3], [1427, 545.8], [1255.7, 554.2]]);
         var hCircle = homography(sq, [[634.4, 16.4], [785, 21], [785, 245], [634.4, 240.3]]);
+        // stand render: exact projection with the camera fitted on its floor joints (card 04)
+        var c4 = window.PARK_CAMS.stand, cam4 = new THREE.PerspectiveCamera(c4.fov, 1600 / 773, 0.1, 300);
+        cam4.position.set(c4.pos[0], c4.pos[1], c4.pos[2]); cam4.up.set(c4.up[0], c4.up[1], c4.up[2]); cam4.lookAt(c4.look[0], c4.look[1], c4.look[2]);
+        cam4.updateMatrixWorld(); cam4.updateProjectionMatrix();
+        var v4 = new THREE.Vector3();
+        function pStand(L, y) { v4.set(L, y, 0).project(cam4); return [(v4.x + 1) / 2 * 1600, (1 - v4.y) / 2 * 773]; }
         function sample(d, x, y, i) {
           var xi = Math.round(x), yi = Math.round(y);
           if (xi < 0 || yi < 0 || xi >= d.width || yi >= d.height) return;
@@ -1409,10 +1415,10 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
           for (var i = 0; i < CW; i++) {
             var L = (i + 0.5) / PX, idx = (j * CW + i) * 4, p;
             if (L < 11.53) {
-              p = hStand(L / 11.53, v);
+              p = pStand(L, yM);
               if (!hiddenStand(p[0], p[1])) sample(data.stand, p[0], p[1], idx);
             } else if (L < 14.74) {
-              p = hTvs((L - 11.53) / 3.21, v);
+              p = pStand(L, yM);
               var py = p[1], lim = p[0] > 1350 ? 440 : 497;
               while (py > lim) py -= 49;   // bottom rows hidden by the stone on the render: repeat the STAR pattern
               sample(data.stand, p[0], py, idx);
@@ -1791,7 +1797,7 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
     };
     window.PARK_CAMS = {
       rail: { pos: [30.544, 5.248, 9.891], look: [22.042, 2.462, 5.423], up: [-0.2237, 0.9593, -0.1726], fov: 22.05 },   // fitted on the render (rms 4 px)
-      stand: { pos: [0.22, 1.72, 10.18], look: [4.91, 1.91, 1.35], fov: 36 },
+      stand: { pos: [1.207, 1.929, 11.172], look: [5.021, 1.891, 1.928], up: [0.0099, 1, 0], fov: 35.54 },   // fitted on the floor joints of the stand render (rms 2 px)
       hall: { pos: [-6.3, 3.4, 16], look: [-6.3, 2.6, -14], fov: 50,
           // the cursor drives a curved dolly: from the 6th pillar of the right wall back to the view above
           path: { from: [11, 3.4, -15], via: [11, 3.4, 14], fromLook: [-10.4, 2.6, -15] } }
@@ -1880,9 +1886,38 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
     return { set: function (a) { angle = a; req(); }, start: 0 };
   }
 
+  /* Card 04: the same run seen from the stand, camera fitted on the floor joints of the stand render */
+  function viewer04(shot) {
+    var renderer;
+    try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); } catch (e) { return null; }
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    var scene = window.buildParkScene({ white: false, onUpdate: function () { req(); } });
+    var pivot = scene.userData.pivot, ROT = 0.5;
+    var c = window.PARK_CAMS.stand, refAspect = 1600 / 773;
+    var cam = new THREE.PerspectiveCamera(c.fov, refAspect, 0.1, 300);
+    cam.position.set(c.pos[0], c.pos[1], c.pos[2]); cam.up.set(c.up[0], c.up[1], c.up[2]); cam.lookAt(c.look[0], c.look[1], c.look[2]);
+    var hfov = 2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(c.fov) / 2) * refAspect);
+    shot.appendChild(renderer.domElement);
+    shot.classList.add('is3d');
+    var angle = 0, raf = 0;
+    function draw() { raf = 0; pivot.rotation.y = THREE.MathUtils.degToRad(angle * ROT); renderer.render(scene, cam); }
+    function req() { if (!raf) raf = requestAnimationFrame(draw); }
+    function size() {
+      var w = shot.clientWidth, h = shot.clientHeight; if (!w || !h) return;
+      renderer.setSize(w, h, false);
+      var asp = w / h; cam.aspect = asp; cam.fov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(hfov / 2) / asp));
+      cam.updateProjectionMatrix(); req();
+    }
+    if ('ResizeObserver' in window) new ResizeObserver(size).observe(shot); else window.addEventListener('resize', size);
+    size();
+    return { set: function (a) { angle = a; req(); }, start: 0 };
+  }
+
   function viewer(shot, key, idx) {
     if (key === 'modules') return viewer02(shot);
     if (key === 'plan') return viewer03(shot);
+    if (key === 'stand') return viewer04(shot);
     var M = MODELS[key];
     var renderer;
     try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); } catch (e) { return null; }
