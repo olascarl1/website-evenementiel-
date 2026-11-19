@@ -361,7 +361,6 @@ button.frame { border: 0; }
 .lb-btn:hover { border-color: var(--sky-orange); color: var(--sky-orange); }
 .lb-btn svg { width: 18px; height: 18px; }
 .lb-close { position: absolute; top: max(14px, env(safe-area-inset-top, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); background: rgba(20,20,20,0.8); }
-.lb-count { font-family: var(--font-display); font-size: 12px; color: #8f8f8c; align-self: center; margin-left: 4px; font-variant-numeric: tabular-nums; }
 @media (max-width: 760px) {
   .lb { place-items: start center; overflow-y: auto; }
   .lb-inner { grid-template-columns: 1fr; margin-top: 52px; }
@@ -813,7 +812,6 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
       <div class="lb-nav">
         <button type="button" class="lb-btn" id="lb-prev" aria-label="Photo précédente" data-i18n-aria="lbPrev"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <button type="button" class="lb-btn" id="lb-next" aria-label="Photo suivante" data-i18n-aria="lbNext"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        <span class="lb-count" id="lb-count"></span>
       </div>
     </div>
   </div>
@@ -2042,7 +2040,7 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
 
   /* ---------- Photo viewer ---------- */
   var lb = document.getElementById('lb'), lbImg = document.getElementById('lb-img'), lbCap = document.getElementById('lb-cap');
-  var lbStats = document.getElementById('lb-stats'), lbIg = document.getElementById('lb-ig'), lbCount = document.getElementById('lb-count');
+  var lbStats = document.getElementById('lb-stats'), lbIg = document.getElementById('lb-ig');
   var shots = Array.prototype.slice.call(document.querySelectorAll('.zoom'));
   var lbIndex = -1, lastFocus = null;
   function fmt(n) {
@@ -2074,7 +2072,6 @@ footer { padding: 26px 0 40px; border-top: 1px solid var(--line); font-size: 13.
       var d = new Date(st.date + 'T12:00:00');
       lbDate.textContent = MSG[lang].posted + d.toLocaleDateString(MSG[lang].locale, { day: 'numeric', month: 'long', year: 'numeric' });
     }
-    lbCount.textContent = (lbIndex + 1) + ' / ' + shots.length;
   }
   function openLb(i) {
     lastFocus = document.activeElement;
